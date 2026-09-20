@@ -164,7 +164,21 @@
   </div>
 
   <div class="card">
-    <h2>② 你現在的進度（選填）</h2>
+    <h2>② 制度那一份（兩種情況都算給你看）</h2>
+
+    <div class="field">
+      <label for="li">勞保＋勞退，預估每月可以領多少
+        <span class="hint">
+          不確定就先抓個數字，下面會同時算「有這一份」跟「完全沒有」兩種結果。
+          想查實際金額：勞保局 e 化服務系統。
+        </span>
+      </label>
+      <div class="row"><input type="number" id="li" value="25000" min="0" step="1000"><span class="unit">元／月</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>③ 你現在的進度（選填）</h2>
 
     <div class="field">
       <label for="age">目前年齡</label>
@@ -188,14 +202,31 @@
 
   <div id="out">
 
-    <div class="card" style="text-align:center">
-      <p class="big-cap">你需要的本金</p>
-      <p class="big-num" id="principal">—</p>
-      <p class="big-sub" id="pSub">—</p>
+    <div class="card">
+      <h2>兩種情況，你要準備的不一樣</h2>
+      <table class="bd" id="scenTable">
+        <thead><tr><th>　</th><th>自備本金</th><th>每月要存</th></tr></thead>
+        <tbody>
+          <tr class="hi"><td>制度那份<b id="liLbl"></b>還在</td><td id="pA">—</td><td id="mA">—</td></tr>
+          <tr><td>完全沒有，<br>全部自己來</td><td id="pB">—</td><td id="mB">—</td></tr>
+        </tbody>
+      </table>
+      <div class="note" id="scenNote"></div>
+      <details class="how">
+        <summary>兩欄差在哪</summary>
+        <div class="body">
+          上面那列假設勞保加勞退真的按你填的金額給付，所以你只要自己補<b>差額</b>的部分：
+          <code>自備本金 ＝ (月領目標 − 制度給的) × 12 ÷ 年報酬率</code>
+          下面那列不依賴任何制度給付，全部自己來：
+          <code>自備本金 ＝ 月領目標 × 12 ÷ 年報酬率</code>
+          兩個都算給你看，是因為制度會不會變、變多少，不是你能控制的——
+          但你可以先知道兩種情況各自長什麼樣子。
+        </div>
+      </details>
     </div>
 
     <div class="card">
-      <h2>③ 報酬假設差一點，本金差多少</h2>
+      <h2>報酬假設差一點，本金差多少</h2>
       <table class="bd">
         <thead><tr><th>年報酬假設</th><th>需要本金</th></tr></thead>
         <tbody id="rateTable"></tbody>
@@ -214,12 +245,11 @@
     </div>
 
     <div class="card" id="saveCard">
-      <h2>④ 從現在開始要存多少</h2>
+      <h2>你的條件</h2>
       <table class="bd">
         <tr><td>距離退休</td><td id="sYears">—</td></tr>
-        <tr><td>已經準備</td><td id="sHave">—</td></tr>
-        <tr><td>還要再存</td><td id="sGap">—</td></tr>
-        <tr class="hi"><td>每個月要存</td><td id="sMon">—</td></tr>
+        <tr><td>已經準備的資產</td><td id="sHave">—</td></tr>
+        <tr><td>年報酬假設</td><td id="sRate">—</td></tr>
       </table>
       <details class="how">
         <summary>這個數字怎麼算</summary>
@@ -299,13 +329,40 @@
   function calc() {
     var need = num('need');
     var r = parseFloat(rateEl.value);
-    var age = num('age'), retAge = num('retAge'), have = num('have');
+    var age = num('age'), retAge = num('retAge'), have = num('have'), li = num('li');
 
-    var P = principalFor(need, r);
-    $('principal').textContent = wan(P);
-    $('pSub').textContent =
-      '月領 ' + money(need) + ' 元 × 12 ÷ ' + r.toFixed(1) + '% ＝ ' + wan(P) +
-      '（靠孳息過活、本金不動）';
+    var n = Math.max(retAge - age, 0);
+    var rr = r / 100;
+    var haveFut = have * Math.pow(1 + rr, n);
+
+    // 每月要存：把差額用年金公式反推
+    function monthlySave(target) {
+      var gap = Math.max(target - haveFut, 0);
+      if (n <= 0) return gap;
+      var i = rr / 12, N = n * 12;
+      return i === 0 ? gap / N : gap * i / (Math.pow(1 + i, N) - 1);
+    }
+
+    // 情境 A：制度那份還在 → 只補差額
+    var needA = Math.max(need - li, 0);
+    var pA = principalFor(needA, r);
+    // 情境 B：完全沒有 → 全部自己來
+    var pB = principalFor(need, r);
+
+    $('liLbl').textContent = li > 0 ? '（' + money(li) + ' 元／月）' : '';
+    $('pA').textContent = wan(pA);
+    $('mA').textContent = money(monthlySave(pA)) + ' 元';
+    $('pB').textContent = wan(pB);
+    $('mB').textContent = money(monthlySave(pB)) + ' 元';
+
+    $('scenNote').innerHTML = li > 0
+      ? '<b>差 ' + wan(pB - pA) + '。</b>制度那一份每月 ' + money(li) +
+        ' 元，換算成本金就是這個量級——這也是為什麼它值得你花十分鐘去查清楚到底有多少。'
+      : '你把制度那份填 0，所以兩列一樣。填進去才看得出差距。';
+
+    $('sYears').textContent = n + ' 年';
+    $('sHave').textContent = have > 0 ? wan(have) + '　（退休時滾到 ' + wan(haveFut) + '）' : '0 元';
+    $('sRate').textContent = r.toFixed(1) + '%';
 
     // 報酬率對照表
     var rows = '';
@@ -324,24 +381,6 @@
       '<b>同樣月領 ' + money(need) + ' 元</b>：假設 6% 要 ' + wan(high) +
       '，假設 3% 要 ' + wan(low) + '——<b>差 ' + wan(low - high) + '</b>。' +
       '真正決定你要存多少的，不只是你想花多少，還有你用多少報酬在假設。';
-
-    // 每月要存
-    var n = Math.max(retAge - age, 0);
-    var rr = r / 100;
-    var haveFut = have * Math.pow(1 + rr, n);
-    var gap = Math.max(P - haveFut, 0);
-
-    $('sYears').textContent = n + ' 年';
-    $('sHave').textContent = have > 0 ? wan(have) + ' → 退休時 ' + wan(haveFut) : '0 元';
-    $('sGap').textContent = wan(gap);
-
-    var mon;
-    if (n <= 0) mon = gap;
-    else {
-      var i = rr / 12, N = n * 12;
-      mon = i === 0 ? gap / N : gap * i / (Math.pow(1 + i, N) - 1);
-    }
-    $('sMon').textContent = money(mon) + ' 元';
 
     $('out').classList.add('on');
   }
