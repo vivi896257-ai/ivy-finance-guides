@@ -1,0 +1,276 @@
+<title>Ivy 的金融懶人包</title>
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票（口播測試/cards.py），與各懶人包內頁同一套 ── */
+  :root {
+    --ground:    #F3F1E4;
+    --surface:   #FCFDF5;
+    --chip:      #E9E6DB;
+    --line:      #DEDACD;
+    --ink:       #1A1A16;
+    --ink-soft:  #6C6860;
+    --accent:    #B86048;
+    --key:       #C9603F;
+    --good:      #4EA86C;
+    --warn:      #C65842;
+    --on-accent: #FFF0E1;
+    --shadow:    0 2px 10px rgba(26, 26, 22, .07), 0 8px 28px rgba(26, 26, 22, .05);
+
+    --wm-color:  #1A1A16;
+    --wm-alpha:  .075;
+
+    --font-sans: "Noto Sans TC", "PingFang TC", "Hiragino Sans TC",
+                 "Microsoft JhengHei", system-ui, sans-serif;
+    --font-serif: "Noto Serif TC", "Songti TC", "PingFang TC", serif;
+
+    --step: clamp(.9rem, .86rem + .2vw, 1rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:    #16150F;
+      --surface:   #211F17;
+      --chip:      #2C2920;
+      --line:      #343126;
+      --ink:       #F1EEE2;
+      --ink-soft:  #A29C8E;
+      --accent:    #D9805F;
+      --key:       #E08B62;
+      --good:      #6DC48D;
+      --warn:      #E0765C;
+      --on-accent: #221009;
+      --wm-color:  #F1EEE2;
+      --wm-alpha:  .06;
+      --shadow:    0 2px 10px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:    #16150F;
+    --surface:   #211F17;
+    --chip:      #2C2920;
+    --line:      #343126;
+    --ink:       #F1EEE2;
+    --ink-soft:  #A29C8E;
+    --accent:    #D9805F;
+    --key:       #E08B62;
+    --good:      #6DC48D;
+    --warn:      #E0765C;
+    --on-accent: #221009;
+    --wm-color:  #F1EEE2;
+    --wm-alpha:  .06;
+    --shadow:    0 2px 10px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--step);
+    line-height: 1.7;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .watermark {
+    position: fixed;
+    inset: -25%;
+    z-index: 5;
+    pointer-events: none;
+    user-select: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    gap: 3.4rem 3.2rem;
+    transform: rotate(-24deg);
+    font-family: var(--font-serif);
+    font-weight: 900;
+    font-size: 1.05rem;
+    letter-spacing: .1em;
+    color: var(--wm-color);
+    opacity: var(--wm-alpha);
+    white-space: nowrap;
+  }
+
+  .wrap {
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: 3rem 1.15rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.75rem;
+  }
+
+  header { display: flex; flex-direction: column; gap: .9rem; }
+
+  .handle-top {
+    font-family: var(--font-serif);
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: .06em;
+    margin: 0;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.85rem, 1.35rem + 2.3vw, 2.5rem);
+    font-weight: 900;
+    line-height: 1.35;
+    text-wrap: balance;
+  }
+  h1 .em { color: var(--key); display: block; }
+
+  .lede { margin: 0; color: var(--ink-soft); }
+
+  .list { display: flex; flex-direction: column; gap: 1rem; }
+
+  a.item {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface);
+    border-radius: 1.1rem;
+    box-shadow: var(--shadow);
+    padding: 1.15rem 1.25rem;
+    border-left: .38rem solid var(--accent);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  a.item:hover, a.item:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(26, 26, 22, .1), 0 14px 34px rgba(26, 26, 22, .08);
+  }
+  a.item:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  a.item .tag {
+    font-size: .73rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: var(--ink-soft);
+  }
+  a.item h2 {
+    margin: .2rem 0 0;
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-weight: 900;
+    line-height: 1.35;
+  }
+  a.item p { margin: .45rem 0 0; color: var(--ink-soft); font-size: .92rem; }
+  a.item .go {
+    display: inline-block;
+    margin-top: .7rem;
+    color: var(--accent);
+    font-weight: 900;
+    font-size: .9rem;
+  }
+
+  .motto {
+    background: var(--accent);
+    color: var(--on-accent);
+    border-radius: 1.1rem;
+    padding: 1.5rem 1.3rem;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .motto p { margin: 0; }
+  .motto .big {
+    font-family: var(--font-serif);
+    font-size: clamp(1.25rem, 1.05rem + .9vw, 1.55rem);
+    font-weight: 900;
+    line-height: 1.5;
+  }
+  .motto .sub { margin-top: .6rem; font-size: .9rem; opacity: .9; }
+
+  @media (prefers-reduced-motion: reduce) {
+    a.item { transition: none; }
+    a.item:hover, a.item:focus-visible { transform: none; }
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .8rem;
+    font-size: .82rem;
+    color: var(--ink-soft);
+  }
+  footer .disclaim { color: var(--warn); font-weight: 700; margin: 0; }
+  footer p { margin: 0; }
+  .handle {
+    font-family: var(--font-serif);
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: .04em;
+  }
+</style>
+
+<div class="watermark" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <header>
+    <p class="handle-top">@ivy_073</p>
+    <h1>金融懶人包<span class="em">一個一個拆給你聽</span></h1>
+    <p class="lede">影片講不完的，整理在這裡。每一份都可以直接下滑看完、截圖收藏。</p>
+  </header>
+
+  <nav class="list">
+
+    <a class="item" href="dividend-tax/">
+      <span class="tag">ETF・稅</span>
+      <h2>配息課稅速查</h2>
+      <p>你領到的配息不是同一種錢。54C、76W、收益平準金，只有一塊要進你的所得——還有為什麼你不用自己扣。</p>
+      <span class="go">打開 →</span>
+    </a>
+
+    <a class="item" href="dividend-source/">
+      <span class="tag">ETF・配息組成</span>
+      <h2>配息組成怎麼看</h2>
+      <p>配多少 ≠ 你最後可以花多少。一次配息其實是三種錢，先看組成，再算數字。</p>
+      <span class="go">打開 →</span>
+    </a>
+
+    <a class="item" href="reserved-portion/">
+      <span class="tag">資產傳承・民法</span>
+      <h2>特留分修法怎麼看</h2>
+      <p>兄弟姊妹特留分刪除了，但你的財產還沒安全。改了什麼、什麼時候上路，兩個情境算給你看。</p>
+      <span class="go">打開 →</span>
+    </a>
+
+  </nav>
+
+  <div class="motto">
+    <p class="big">我不教你買什麼，<br>只教你看懂你買的是什麼。</p>
+    <p class="sub">金融工具沒有好壞，差別只在你知不知道它拿來解決什麼問題。</p>
+  </div>
+
+  <footer>
+    <p class="disclaim">本站內容為一般性觀念整理，不構成個案建議，也不是特定商品的推介。</p>
+    <p>稅務、法律的個案情況，請洽會計師、國稅局或律師。</p>
+    <p><span class="handle">@ivy_073</span>　2026／08</p>
+  </footer>
+
+</div>
+
+<script>
+  // 浮水印鋪滿視窗：數量隨螢幕大小算，手機不會過密、桌機不會露白。
+  (function () {
+    var wm = document.querySelector('.watermark');
+    if (!wm) return;
+    function fill() {
+      var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+      n = Math.min(Math.max(n, 24), 160);
+      if (wm.childElementCount === n) return;
+      wm.textContent = '';
+      for (var i = 0; i < n; i++) {
+        var s = document.createElement('span');
+        s.textContent = '@ivy_073';
+        wm.appendChild(s);
+      }
+    }
+    fill();
+    window.addEventListener('resize', fill);
+  })();
+</script>

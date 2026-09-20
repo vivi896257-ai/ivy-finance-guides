@@ -1,0 +1,540 @@
+<title>配息組成怎麼看</title>
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票（口播測試/cards.py），與配息課稅懶人包同一套 ── */
+  :root {
+    --ground:    #F3F1E4;
+    --surface:   #FCFDF5;
+    --chip:      #E9E6DB;
+    --line:      #DEDACD;
+    --ink:       #1A1A16;
+    --ink-soft:  #6C6860;
+    --accent:    #B86048;
+    --key:       #C9603F;
+    --good:      #4EA86C;
+    --warn:      #C65842;
+    --on-accent: #FFF0E1;
+    --shadow:    0 2px 10px rgba(26, 26, 22, .07), 0 8px 28px rgba(26, 26, 22, .05);
+
+    --wm-color:  #1A1A16;
+    --wm-alpha:  .075;
+
+    --font-sans: "Noto Sans TC", "PingFang TC", "Hiragino Sans TC",
+                 "Microsoft JhengHei", system-ui, sans-serif;
+    --font-serif: "Noto Serif TC", "Songti TC", "PingFang TC", serif;
+
+    --step: clamp(.9rem, .86rem + .2vw, 1rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:    #16150F;
+      --surface:   #211F17;
+      --chip:      #2C2920;
+      --line:      #343126;
+      --ink:       #F1EEE2;
+      --ink-soft:  #A29C8E;
+      --accent:    #D9805F;
+      --key:       #E08B62;
+      --good:      #6DC48D;
+      --warn:      #E0765C;
+      --on-accent: #221009;
+      --wm-color:  #F1EEE2;
+      --wm-alpha:  .06;
+      --shadow:    0 2px 10px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:    #16150F;
+    --surface:   #211F17;
+    --chip:      #2C2920;
+    --line:      #343126;
+    --ink:       #F1EEE2;
+    --ink-soft:  #A29C8E;
+    --accent:    #D9805F;
+    --key:       #E08B62;
+    --good:      #6DC48D;
+    --warn:      #E0765C;
+    --on-accent: #221009;
+    --wm-color:  #F1EEE2;
+    --wm-alpha:  .06;
+    --shadow:    0 2px 10px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .3);
+  }
+
+  * { box-sizing: border-box; }
+
+  /* ── 浮水印：固定在視窗上層，捲到哪截圖到哪都帶得到 ──────────
+     壓在內容上是刻意的（防截圖盜用），pointer-events:none 不影響選字。 */
+  .watermark {
+    position: fixed;
+    inset: -25%;
+    z-index: 5;
+    pointer-events: none;
+    user-select: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    gap: 3.4rem 3.2rem;
+    transform: rotate(-24deg);
+    font-family: var(--font-serif);
+    font-weight: 900;
+    font-size: 1.05rem;
+    letter-spacing: .1em;
+    color: var(--wm-color);
+    opacity: var(--wm-alpha);
+    white-space: nowrap;
+  }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--step);
+    line-height: 1.7;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.15rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  section { display: flex; flex-direction: column; gap: 1rem; }
+
+  h1, h2, h3 { margin: 0; text-wrap: balance; line-height: 1.35; }
+
+  h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.9rem, 1.4rem + 2.4vw, 2.6rem);
+    font-weight: 900;
+    letter-spacing: -.01em;
+  }
+  h1 .em { color: var(--key); display: block; }
+
+  h2 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.3rem, 1.1rem + .9vw, 1.6rem);
+    font-weight: 900;
+  }
+
+  .kicker {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .lede { color: var(--ink-soft); margin: 0; }
+
+  .tickers {
+    display: flex;
+    gap: .45rem;
+    flex-wrap: wrap;
+    font-family: var(--font-serif);
+    font-weight: 900;
+  }
+  .tickers span {
+    background: var(--chip);
+    color: var(--accent);
+    padding: .2rem .7rem;
+    border-radius: 2rem;
+    font-size: .95rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── 兩道關卡 ─────────────────────────────────────────────── */
+  .gate {
+    background: var(--surface);
+    border-radius: 1.1rem;
+    box-shadow: var(--shadow);
+    padding: 1.1rem 1.25rem;
+    border-left: .38rem solid var(--warn);
+  }
+  .gate .tag {
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--ink-soft);
+  }
+  .gate h3 {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    font-weight: 900;
+    margin-top: .15rem;
+  }
+  .gate ul {
+    margin: .85rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+  .gate li {
+    display: flex;
+    gap: .6rem;
+    align-items: baseline;
+  }
+  .gate li::before {
+    content: "";
+    flex: none;
+    width: .45rem;
+    height: .45rem;
+    border-radius: 50%;
+    background: var(--warn);
+    transform: translateY(-.15rem);
+  }
+  .gate .num {
+    font-family: var(--font-serif);
+    font-weight: 900;
+    color: var(--warn);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── ⭐ 分流圖：一次配息拆成三種錢 ───────────────────────── */
+  .flow { display: flex; flex-direction: column; }
+  .flow .源 {
+    background: var(--accent);
+    color: var(--on-accent);
+    border-radius: 1.1rem;
+    padding: 1rem 1.25rem;
+    box-shadow: var(--shadow);
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    font-weight: 900;
+    text-align: center;
+  }
+  .branches {
+    margin: 0;
+    padding: 0 0 0 1.6rem;
+    list-style: none;
+    border-left: 2px solid var(--line);
+    margin-left: 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+    padding-top: .9rem;
+  }
+  .branches li {
+    position: relative;
+    background: var(--surface);
+    border-radius: .85rem;
+    box-shadow: var(--shadow);
+    padding: .8rem 1rem;
+    font-weight: 900;
+  }
+  .branches li::before {
+    content: "";
+    position: absolute;
+    left: -1.6rem;
+    top: 1.35rem;
+    width: 1.6rem;
+    height: 2px;
+    background: var(--line);
+  }
+  .branches li .what {
+    display: block;
+    font-weight: 400;
+    font-size: .85rem;
+    color: var(--ink-soft);
+    margin-top: .2rem;
+  }
+
+  /* ── ✕／✓ 對照 ───────────────────────────────────────────── */
+  .marks { display: flex; flex-direction: column; gap: 1rem; }
+  .mark {
+    background: var(--surface);
+    border-radius: 1.1rem;
+    box-shadow: var(--shadow);
+    padding: 1.05rem 1.2rem;
+    border-left: .38rem solid var(--line);
+  }
+  .mark.no  { border-left-color: var(--warn); }
+  .mark.yes { border-left-color: var(--good); }
+  .mark h3 {
+    font-size: 1rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .mark h3::before {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 900;
+  }
+  .mark.no h3::before  { content: "✕"; color: var(--warn); }
+  .mark.yes h3::before { content: "✓"; color: var(--good); }
+  .mark ul {
+    margin: .7rem 0 0;
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+  }
+
+  /* ── 三步驟：真的是序列，才編號 ─────────────────────────── */
+  ol.steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+  }
+  ol.steps li {
+    counter-increment: step;
+    background: var(--surface);
+    border-radius: .95rem;
+    box-shadow: var(--shadow);
+    padding: .95rem 1.1rem .95rem 3.4rem;
+    position: relative;
+    font-weight: 900;
+  }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 1.05rem;
+    top: .9rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-serif);
+    font-weight: 900;
+    display: grid;
+    place-items: center;
+    font-size: .95rem;
+  }
+
+  .punch {
+    background: var(--accent);
+    color: var(--on-accent);
+    border-radius: 1.1rem;
+    padding: 1.5rem 1.25rem;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .punch .tag { font-size: .8rem; opacity: .85; }
+  .punch .big {
+    font-family: var(--font-serif);
+    font-size: clamp(1.7rem, 1.3rem + 1.8vw, 2.2rem);
+    font-weight: 900;
+    margin-top: .3rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pull {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--key);
+    line-height: 1.55;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .pull .quiet { display: block; color: var(--ink-soft); font-size: .95rem; font-weight: 700; }
+
+  .note {
+    font-size: .78rem;
+    color: var(--ink-soft);
+    background: var(--chip);
+    border-radius: .7rem;
+    padding: .6rem .85rem;
+    margin: 0;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    font-size: .82rem;
+    color: var(--ink-soft);
+  }
+  footer ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .3rem; }
+  footer .disclaim { color: var(--warn); font-weight: 700; }
+  .handle {
+    font-family: var(--font-serif);
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: .04em;
+  }
+</style>
+
+<div class="watermark" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <header>
+    <p class="kicker">ETF 配息組成　怎麼看</p>
+    <h1>配多少<span class="em">≠ 你最後可以花多少</span></h1>
+    <div class="tickers"><span>0056</span><span>00878</span><span>00919</span></div>
+    <p class="lede">領配息的話，你領到的錢不會完全進你的口袋。這頁講兩件事：什麼會先被扣掉，還有那筆錢到底是由什麼組成的。</p>
+  </header>
+
+  <section>
+    <h2>先看兩個會吃掉配息的</h2>
+
+    <div class="gate">
+      <p class="tag">第一個吃你的配息</p>
+      <h3>二代健保補充保費</h3>
+      <ul>
+        <li>這一筆算股利所得</li>
+        <li>單次給付超過 <span class="num">2 萬元</span>、符合計收條件</li>
+        <li>還沒入帳就先扣 <span class="num">2.11%</span></li>
+      </ul>
+    </div>
+
+    <div class="gate">
+      <p class="tag">第二個吃你的配息</p>
+      <h3>五月的所得稅</h3>
+      <ul>
+        <li>配息裡的股利所得</li>
+        <li>隔年五月報稅時依規定計算</li>
+      </ul>
+    </div>
+
+    <p class="note">實際是否計收、怎麼計算，依所得來源及個人狀況判斷。</p>
+
+    <p class="pull">
+      <span class="quiet">你辛苦存了這麼久，以為配多少就可以花多少——</span>
+      結果不是這樣算的。
+    </p>
+  </section>
+
+  <section>
+    <h2>這筆錢，不只一種所得</h2>
+    <p class="lede">很多人領了好幾年的配息，卻沒注意到這件事。</p>
+
+    <div class="flow">
+      <div class="源">這一次配息</div>
+      <ul class="branches">
+        <li>成分股的股利
+          <span class="what">ETF 收到成分股公司發的股利，再分配給你</span>
+        </li>
+        <li>收益平準金
+          <span class="what">新資金進來時從裡面撥出的，避免原本的人配息被稀釋</span>
+        </li>
+        <li>已實現資本利得
+          <span class="what">ETF 調整持股、賣掉股票之後產生的價差</span>
+        </li>
+      </ul>
+    </div>
+
+    <p class="note">示意圖，非特定商品實際配息組成。各來源比例逐檔、逐次都不同。</p>
+
+    <p class="pull">
+      <span class="quiet">來源不同，</span>
+      適用的稅法處理本來就不一樣。
+    </p>
+  </section>
+
+  <section>
+    <h2>所以算法差在哪</h2>
+    <div class="marks">
+      <div class="mark no">
+        <h3>很多人是這樣算的</h3>
+        <ul>
+          <li>看到這次配息 3 萬</li>
+          <li>就直接拿去算二代健保和所得稅</li>
+        </ul>
+      </div>
+      <div class="mark yes">
+        <h3>要先看的是</h3>
+        <ul>
+          <li>這 3 萬塊到底是什麼錢</li>
+          <li>裡面有多少成分是哪一種來源</li>
+        </ul>
+      </div>
+    </div>
+    <p class="pull">
+      <span class="quiet">而且這個比例你根本不需要自己猜——</span>
+      投信在配息的時候，會公布收益分配資料給你。
+    </p>
+  </section>
+
+  <section>
+    <h2>先講清楚這張表的界線</h2>
+    <div class="marks">
+      <div class="mark no">
+        <h3>這不解決什麼</h3>
+        <ul>
+          <li>不會讓你少繳一塊錢</li>
+          <li>不會改變你要繳的稅</li>
+        </ul>
+      </div>
+      <div class="mark yes">
+        <h3>這解決什麼</h3>
+        <ul>
+          <li>拿配息規劃生活時算得準</li>
+          <li>知道這筆錢是怎麼組成的</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>下一次領配息</h2>
+    <ol class="steps">
+      <li>不要只看這次配多少</li>
+      <li>打開投信的收益分配資料</li>
+      <li>看清楚領到的是什麼錢</li>
+    </ol>
+    <p class="lede">那張表在投信官網的「收益分配」公告裡，每一次配息都會公布一次；券商 App 的配息紀錄通常也查得到。</p>
+  </section>
+
+  <section>
+    <div class="punch">
+      <p class="tag">這支片只講一件事</p>
+      <p class="big">配多少 ≠ 花多少</p>
+    </div>
+  </section>
+
+  <footer>
+    <div>
+      <strong>資料來源</strong>
+      <ul>
+        <li>全民健康保險補充保險費　費率 2.11%</li>
+        <li>衛生福利部中央健康保險署　補充保險費計收規定</li>
+        <li>財政部稅務入口網　綜合所得稅・股利所得課稅規定</li>
+        <li>各投信「收益分配通知書／收益分配組成」公告</li>
+      </ul>
+    </div>
+    <p class="disclaim">本頁為一般性觀念整理，不構成個案建議，也不是特定商品的推介。</p>
+    <p>文中點名的 ETF 僅用於說明「怎麼看收益分配資料」，未比較任何商品優劣。實際稅務與補充保費計收，須視個人身分、所得來源及給付情況而定；個案情況請洽會計師或國稅局。</p>
+    <p><span class="handle">@ivy_073</span>　2026／08 整理</p>
+  </footer>
+
+</div>
+
+<script>
+  // 浮水印鋪滿視窗：數量隨螢幕大小算，手機不會過密、桌機不會露白。
+  (function () {
+    var wm = document.querySelector('.watermark');
+    if (!wm) return;
+    function fill() {
+      var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+      n = Math.min(Math.max(n, 24), 160);
+      if (wm.childElementCount === n) return;
+      wm.textContent = '';
+      for (var i = 0; i < n; i++) {
+        var s = document.createElement('span');
+        s.textContent = '@ivy_073';
+        wm.appendChild(s);
+      }
+    }
+    fill();
+    window.addEventListener('resize', fill);
+  })();
+</script>

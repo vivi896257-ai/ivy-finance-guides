@@ -1,0 +1,712 @@
+<title>特留分修法怎麼看</title>
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票（口播測試/cards.py），與其他懶人包網頁版同一套 ── */
+  :root {
+    --ground:    #F3F1E4;
+    --surface:   #FCFDF5;
+    --chip:      #E9E6DB;
+    --line:      #DEDACD;
+    --ink:       #1A1A16;
+    --ink-soft:  #6C6860;
+    --accent:    #B86048;
+    --key:       #C9603F;
+    --good:      #4EA86C;
+    --warn:      #C65842;
+    --on-accent: #FFF0E1;
+    --shadow:    0 2px 10px rgba(26, 26, 22, .07), 0 8px 28px rgba(26, 26, 22, .05);
+
+    --wm-color:  #1A1A16;
+    --wm-alpha:  .075;
+
+    --font-sans: "Noto Sans TC", "PingFang TC", "Hiragino Sans TC",
+                 "Microsoft JhengHei", system-ui, sans-serif;
+    --font-serif: "Noto Serif TC", "Songti TC", "PingFang TC", serif;
+
+    --step: clamp(.9rem, .86rem + .2vw, 1rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:    #16150F;
+      --surface:   #211F17;
+      --chip:      #2C2920;
+      --line:      #343126;
+      --ink:       #F1EEE2;
+      --ink-soft:  #A29C8E;
+      --accent:    #D9805F;
+      --key:       #E08B62;
+      --good:      #6DC48D;
+      --warn:      #E0765C;
+      --on-accent: #221009;
+      --wm-color:  #F1EEE2;
+      --wm-alpha:  .06;
+      --shadow:    0 2px 10px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:    #16150F;
+    --surface:   #211F17;
+    --chip:      #2C2920;
+    --line:      #343126;
+    --ink:       #F1EEE2;
+    --ink-soft:  #A29C8E;
+    --accent:    #D9805F;
+    --key:       #E08B62;
+    --good:      #6DC48D;
+    --warn:      #E0765C;
+    --on-accent: #221009;
+    --wm-color:  #F1EEE2;
+    --wm-alpha:  .06;
+    --shadow:    0 2px 10px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--step);
+    line-height: 1.7;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ── 浮水印：固定在視窗上層，捲到哪截圖到哪都帶得到 ────────── */
+  .watermark {
+    position: fixed;
+    inset: -25%;
+    z-index: 5;
+    pointer-events: none;
+    user-select: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    gap: 3.4rem 3.2rem;
+    transform: rotate(-24deg);
+    font-family: var(--font-serif);
+    font-weight: 900;
+    font-size: 1.05rem;
+    letter-spacing: .1em;
+    color: var(--wm-color);
+    opacity: var(--wm-alpha);
+    white-space: nowrap;
+  }
+
+  .wrap {
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.15rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  section { display: flex; flex-direction: column; gap: 1rem; }
+
+  h1, h2, h3 { margin: 0; text-wrap: balance; line-height: 1.35; }
+
+  h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.9rem, 1.4rem + 2.4vw, 2.6rem);
+    font-weight: 900;
+    letter-spacing: -.01em;
+  }
+  h1 .em { color: var(--key); display: block; }
+
+  h2 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.3rem, 1.1rem + .9vw, 1.6rem);
+    font-weight: 900;
+  }
+
+  .kicker {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .lede { color: var(--ink-soft); margin: 0; }
+
+  .banner {
+    background: var(--accent);
+    color: var(--on-accent);
+    border-radius: 1.1rem;
+    padding: 1.35rem 1.25rem;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .banner p { margin: 0; }
+  .banner .big {
+    font-family: var(--font-serif);
+    font-size: clamp(1.5rem, 1.2rem + 1.4vw, 1.95rem);
+    font-weight: 900;
+    line-height: 1.35;
+  }
+  .banner .sub { margin-top: .35rem; font-weight: 700; opacity: .92; }
+
+  .card {
+    background: var(--surface);
+    border-radius: 1.1rem;
+    box-shadow: var(--shadow);
+    padding: 1.05rem 1.2rem;
+    border-left: .38rem solid var(--line);
+  }
+  .card.yes { border-left-color: var(--good); }
+  .card.no  { border-left-color: var(--warn); }
+  .card.note{ border-left-color: var(--key); }
+  .card h3 { font-size: 1rem; font-weight: 900; }
+  .card .tag {
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  .card p { margin: .45rem 0 0; }
+  .card .fine { color: var(--ink-soft); font-size: .87rem; }
+
+  /* ── 時間軸：這是真的序列 ─────────────────────────────────── */
+  ol.timeline {
+    margin: 0;
+    padding: 0 0 0 1.5rem;
+    list-style: none;
+    border-left: 2px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: .8rem;
+  }
+  ol.timeline li {
+    position: relative;
+    background: var(--surface);
+    border-radius: .95rem;
+    box-shadow: var(--shadow);
+    padding: .9rem 1.05rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: .75rem;
+    flex-wrap: wrap;
+  }
+  ol.timeline li::before {
+    content: "";
+    position: absolute;
+    left: -1.94rem;
+    top: 1.35rem;
+    width: .8rem;
+    height: .8rem;
+    border-radius: 50%;
+    background: var(--line);
+    border: 2px solid var(--ground);
+  }
+  ol.timeline li.done::before { background: var(--good); }
+  ol.timeline li.now::before  { background: var(--ink-soft); }
+  ol.timeline li.next::before { background: var(--key); }
+  ol.timeline .when {
+    font-family: var(--font-serif);
+    font-weight: 900;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    flex-basis: 100%;
+    font-size: .85rem;
+  }
+  ol.timeline .what { font-weight: 900; }
+  ol.timeline .state { color: var(--ink-soft); font-size: .85rem; }
+  ol.timeline li.done .when  { color: var(--good); }
+  ol.timeline li.next .when  { color: var(--key); }
+
+  /* ── 表格 ────────────────────────────────────────────────── */
+  .table-shell { overflow-x: auto; }
+  table {
+    width: 100%;
+    min-width: 21rem;
+    border-collapse: collapse;
+    background: var(--surface);
+    border-radius: 1.1rem;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+  }
+  caption {
+    caption-side: top;
+    text-align: left;
+    padding-bottom: .7rem;
+    color: var(--ink-soft);
+    font-size: .88rem;
+  }
+  th, td { padding: .75rem .85rem; text-align: left; vertical-align: top; }
+  thead th {
+    font-size: .74rem;
+    letter-spacing: .1em;
+    color: var(--ink-soft);
+    font-weight: 700;
+    border-bottom: 1px solid var(--line);
+  }
+  tbody tr + tr td, tbody tr + tr th { border-top: 1px solid var(--line); }
+  tbody th { font-weight: 900; font-size: .92rem; }
+  td.num { text-align: right; font-weight: 700; }
+  tr.hit th, tr.hit td { background: color-mix(in srgb, var(--warn) 9%, transparent); }
+  .del { color: var(--warn); font-weight: 900; }
+  .same { color: var(--ink-soft); }
+  .sub { display: block; font-size: .78rem; color: var(--ink-soft); font-weight: 400; }
+
+  /* ── 四道關卡 ─────────────────────────────────────────────── */
+  ol.gates {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: gate;
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+  }
+  ol.gates li {
+    counter-increment: gate;
+    background: var(--surface);
+    border-radius: .95rem;
+    box-shadow: var(--shadow);
+    padding: .95rem 1.1rem .95rem 3.4rem;
+    position: relative;
+  }
+  ol.gates li::before {
+    content: counter(gate);
+    position: absolute;
+    left: 1.05rem;
+    top: .9rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-serif);
+    font-weight: 900;
+    display: grid;
+    place-items: center;
+    font-size: .95rem;
+  }
+  ol.gates .g-title { font-weight: 900; display: block; }
+  ol.gates .g-why { color: var(--ink-soft); font-size: .87rem; }
+
+  /* ── 試算 ────────────────────────────────────────────────── */
+  .calc {
+    background: var(--surface);
+    border-radius: 1.1rem;
+    box-shadow: var(--shadow);
+    padding: 1.15rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+  }
+  .calc > h3 { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 900; }
+  .calc .setup {
+    background: var(--accent);
+    color: var(--on-accent);
+    border-radius: .8rem;
+    padding: .6rem .9rem;
+    font-weight: 900;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .calc .line {
+    border-left: .3rem solid var(--line);
+    padding-left: .85rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: .5rem;
+  }
+  .calc .line.a { border-left-color: var(--accent); }
+  .calc .line.b { border-left-color: var(--key); }
+  .calc .line.c { border-left-color: var(--good); }
+  .calc .line.d { border-left-color: var(--warn); }
+  .calc .line .k { font-weight: 900; }
+  .calc .line .v {
+    font-family: var(--font-serif);
+    font-weight: 900;
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .calc .line.a .v { color: var(--accent); }
+  .calc .line.b .v { color: var(--key); }
+  .calc .line.c .v { color: var(--good); }
+  .calc .line.d .v { color: var(--warn); }
+  .calc .line .why { flex-basis: 100%; font-size: .84rem; color: var(--ink-soft); }
+
+  ol.actions {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: act;
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+  }
+  ol.actions li {
+    counter-increment: act;
+    background: var(--surface);
+    border-radius: .95rem;
+    box-shadow: var(--shadow);
+    padding: .95rem 1.1rem .95rem 3.4rem;
+    position: relative;
+  }
+  ol.actions li::before {
+    content: counter(act);
+    position: absolute;
+    left: 1.05rem;
+    top: .9rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-serif);
+    font-weight: 900;
+    display: grid;
+    place-items: center;
+    font-size: .95rem;
+  }
+  ol.actions .a-title {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 900;
+    display: block;
+  }
+  ol.actions .a-body { color: var(--ink-soft); font-size: .89rem; }
+
+  .pull {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--key);
+    line-height: 1.55;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .pull .quiet { display: block; color: var(--ink-soft); font-size: .95rem; font-weight: 700; }
+
+  .note {
+    font-size: .78rem;
+    color: var(--ink-soft);
+    background: var(--chip);
+    border-radius: .7rem;
+    padding: .6rem .85rem;
+    margin: 0;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    font-size: .82rem;
+    color: var(--ink-soft);
+  }
+  footer ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .3rem; }
+  footer .disclaim { color: var(--warn); font-weight: 700; }
+  .handle {
+    font-family: var(--font-serif);
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: .04em;
+  }
+
+  .more {
+    display: inline-block;
+    background: var(--chip);
+    color: var(--accent);
+    font-weight: 900;
+    text-decoration: none;
+    padding: .7rem 1.1rem;
+    border-radius: .8rem;
+    align-self: flex-start;
+  }
+  .more:hover, .more:focus-visible { background: var(--accent); color: var(--on-accent); }
+  .more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="watermark" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <header>
+    <p class="kicker">民法 1223 條修法　怎麼看</p>
+    <h1>兄弟姊妹特留分刪除了<span class="em">但你的財產，還沒安全</span></h1>
+    <p class="lede">誰能繼承、沒遺囑怎麼分、有遺囑擋多少、修法後差在哪一格——這頁一次講完，還有算給你看到底差多少錢。</p>
+  </header>
+
+  <section>
+    <h2>這次到底改了什麼</h2>
+    <div class="banner">
+      <p class="big">刪掉的是「特留分」<br>不是「繼承權」</p>
+    </div>
+    <div class="card yes">
+      <p class="tag">有立遺囑</p>
+      <p>兄弟姊妹以後不能再主張特留分。</p>
+    </div>
+    <div class="card no">
+      <p class="tag">沒立遺囑</p>
+      <p>兄弟姊妹一樣依順位繼承，<strong>修法前後完全一樣</strong>。</p>
+    </div>
+    <p class="pull">
+      <span class="quiet">所以這次真正被改到的，</span>
+      只有「已經把話寫下來」的那些人。
+    </p>
+  </section>
+
+  <section>
+    <h2>什麼時候上路？</h2>
+    <p class="lede">很多人以為昨天就生效了。</p>
+    <ol class="timeline">
+      <li class="done">
+        <span class="when">2026／7／28</span>
+        <span class="what">立法院三讀通過</span>
+        <span class="state">已完成</span>
+      </li>
+      <li class="now">
+        <span class="when">待定</span>
+        <span class="what">總統公布</span>
+        <span class="state">以總統府公告為準</span>
+      </li>
+      <li class="next">
+        <span class="when">公布 ＋ 6 個月</span>
+        <span class="what">正式施行</span>
+        <span class="state">推估 2027／2</span>
+      </li>
+    </ol>
+    <div class="banner">
+      <p class="big">在那之前，現行制度仍然有效</p>
+      <p class="sub">兄弟姊妹的特留分，現在還在</p>
+    </div>
+    <p class="pull">
+      <span class="quiet">手上已經有一份遺囑？</span>
+      它是照舊法寫的——這 6 個月就是拿出來重看的時間。
+    </p>
+  </section>
+
+  <section>
+    <h2>誰有繼承權？</h2>
+    <p class="lede">配偶一定有；其他人照順位，前面有人後面就沒有。</p>
+    <div class="banner">
+      <p class="big">配　偶</p>
+      <p class="sub">永遠有繼承權，跟以下任一順位一起繼承</p>
+    </div>
+    <div class="table-shell">
+      <table>
+        <caption>繼承順位（民法 1138）</caption>
+        <thead>
+          <tr><th scope="col">順位</th><th scope="col">誰</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">第一順位</th><td>直系血親卑親屬<span class="sub">子女、孫子女（子女先走才輪到孫）</span></td></tr>
+          <tr><th scope="row">第二順位</th><td>父母<span class="sub">沒有子女、孫子女時才輪到</span></td></tr>
+          <tr><th scope="row">第三順位</th><td>兄弟姊妹<span class="sub">前兩順位都沒有人時才輪到</span></td></tr>
+          <tr><th scope="row">第四順位</th><td>祖父母<span class="sub">前三順位都沒有人時才輪到</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>沒有遺囑，怎麼分</h2>
+    <div class="table-shell">
+      <table>
+        <caption>配偶的應繼分（民法 1144）</caption>
+        <thead>
+          <tr><th scope="col">情況</th><th scope="col">配偶</th><th scope="col">其他人</th></tr>
+        </thead>
+        <tbody>
+          <tr class="hit">
+            <th scope="row">有子女</th>
+            <td>跟子女按人頭平分<span class="sub">注意：不是配偶一半</span></td>
+            <td>子女每人同額</td>
+          </tr>
+          <tr><th scope="row">無子女，有父母</th><td>1／2</td><td>父母分 1／2</td></tr>
+          <tr><th scope="row">無子女無父母，有兄弟姊妹</th><td>1／2</td><td>兄弟姊妹分 1／2</td></tr>
+          <tr><th scope="row">只剩祖父母</th><td>2／3</td><td>祖父母分 1／3</td></tr>
+          <tr><th scope="row">都沒有</th><td>全部</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>特留分修法前後對照</h2>
+    <div class="table-shell">
+      <table>
+        <caption>民法 1223 條．修正前後（被刪的只有最後一列）</caption>
+        <thead>
+          <tr><th scope="col">身分</th><th scope="col">現行</th><th scope="col">修法後</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">配偶</th><td>應繼分 × 1／2</td><td class="same">不變</td></tr>
+          <tr><th scope="row">子女（直系血親卑親屬）</th><td>應繼分 × 1／2</td><td class="same">不變</td></tr>
+          <tr><th scope="row">父母</th><td>應繼分 × 1／2</td><td class="same">不變</td></tr>
+          <tr><th scope="row">祖父母</th><td>應繼分 × 1／3</td><td class="same">不變</td></tr>
+          <tr class="hit"><th scope="row">兄弟姊妹</th><td>應繼分 × 1／3</td><td class="del">刪除（為 0）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">祖父母的特留分並沒有被刪除，仍然是應繼分的 1／3。</p>
+  </section>
+
+  <section>
+    <h2>特留分要「跑出來」，得先過四道關卡</h2>
+    <ol class="gates">
+      <li>
+        <span class="g-title">有遺囑（或遺贈）</span>
+        <span class="g-why">沒有遺囑就照應繼分分，特留分根本不出場。</span>
+      </li>
+      <li>
+        <span class="g-title">遺囑的分配侵害到某人的特留分</span>
+        <span class="g-why">每個人都拿到門檻以上，一樣不會啟動。</span>
+      </li>
+      <li>
+        <span class="g-title">被侵害的人自己主張「扣減權」</span>
+        <span class="g-why">不主張，法律就當你放棄——法院不會主動幫你算。</span>
+      </li>
+      <li>
+        <span class="g-title">在時效內</span>
+        <span class="g-why">知悉受侵害起 2 年、繼承開始起 10 年，過了就消滅。</span>
+      </li>
+    </ol>
+    <div class="banner">
+      <p class="big">所以它發生的機率，其實不高</p>
+      <p class="sub">但一旦發生，是全有全無</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>算給你看</h2>
+
+    <div class="calc">
+      <h3>① 配偶 ＋ 3 個小孩</h3>
+      <p class="lede">這一種，這次修法沒有改到。</p>
+      <p class="setup">遺產 1,200 萬</p>
+      <div class="line a">
+        <span class="k">應繼分（沒遺囑）</span><span class="v">各 300 萬</span>
+        <span class="why">配偶和 3 個小孩，4 個人按人頭平分</span>
+      </div>
+      <div class="line b">
+        <span class="k">特留分（有遺囑）</span><span class="v">各 150 萬</span>
+        <span class="why">應繼分 300 萬 × 1／2</span>
+      </div>
+      <div class="line c">
+        <span class="k">遺囑寫「全部給老大」</span><span class="v">老大 750 萬</span>
+        <span class="why">配偶和另外 2 個小孩，各仍可主張 150 萬</span>
+      </div>
+      <p class="pull">
+        <span class="quiet">配偶和子女的特留分沒有變。</span>
+        這次修法不影響這一組。
+      </p>
+    </div>
+
+    <div class="calc">
+      <h3>② 配偶 ＋ 2 個兄弟姊妹</h3>
+      <p class="lede">沒有子女、父母已不在——這一種才是這次修法的主角。</p>
+      <p class="setup">遺產 1,200 萬</p>
+      <div class="line a">
+        <span class="k">應繼分（沒遺囑）</span><span class="v">手足各 300 萬</span>
+        <span class="why">配偶 1／2 ＝ 600 萬，兄弟姊妹分剩下的 600 萬</span>
+      </div>
+      <div class="line b">
+        <span class="k">現行特留分</span><span class="v">手足各 100 萬</span>
+        <span class="why">應繼分 300 萬 × 1／3</span>
+      </div>
+      <div class="line d">
+        <span class="k">修法後特留分</span><span class="v">手足 0 元</span>
+        <span class="why">遺囑寫「全部給配偶」，他們一毛都拿不到</span>
+      </div>
+      <p class="pull">
+        <span class="quiet">這就是這次修法真正改掉的那一格——</span>
+        但前提是：你要先有一份遺囑。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>遺囑這個工具，解決什麼、不解決什麼</h2>
+    <div class="card yes">
+      <p class="tag">解決</p>
+      <h3>你的財產，照你的意思分</h3>
+      <p class="fine">指定誰拿多少、指定給法定繼承人以外的人，這是遺囑唯一能替你做到的事。</p>
+    </div>
+    <div class="card no">
+      <p class="tag">不解決</p>
+      <h3>證明你簽字那一刻是清醒的、沒被影響</h3>
+      <p class="fine">被脅迫、被隔離、不是出於自由意志簽下的——法律有救濟，但不會自動替你證明。</p>
+    </div>
+    <p class="pull">
+      <span class="quiet">法院不是看誰比較孝順，</span>
+      是看誰拿得出東西。
+    </p>
+  </section>
+
+  <section>
+    <h2>現在可以做的三件事</h2>
+    <p class="lede">趁意識清楚的時候安排，才叫規劃。</p>
+    <ol class="actions">
+      <li>
+        <span class="a-title">遺囑</span>
+        <span class="a-body">決定「怎麼分」。自書遺囑不用公證也有效，但沒公證，被爭執時更難證明。</span>
+      </li>
+      <li>
+        <span class="a-title">信託</span>
+        <span class="a-body">決定「怎麼管」。讓資產在你還在的時候，就照你的意思運作。</span>
+      </li>
+      <li>
+        <span class="a-title">照顧紀錄</span>
+        <span class="a-body">決定「證不證明得了」。照顧歷程、醫療決策、費用支出，留得下痕跡。</span>
+      </li>
+    </ol>
+    <p class="pull">
+      <span class="quiet">很多遺產糾紛，真正決定結果的</span>
+      不是在法院，是在進法院之前。
+    </p>
+  </section>
+
+  <section>
+    <a class="more" href="../">看其他懶人包 →</a>
+  </section>
+
+  <footer>
+    <div>
+      <strong>資料來源</strong>
+      <ul>
+        <li>立法院　2026／7／28 三讀通過民法第 1223 條修正案</li>
+        <li>全國法規資料庫　民法繼承編（1138、1144、1223、1225）</li>
+        <li>民法繼承編施行法第 12 條（公布後屆滿 6 個月施行）</li>
+      </ul>
+    </div>
+    <p class="disclaim">本頁為一般性法規整理，不構成個案法律意見。</p>
+    <p>施行日以總統公布日起算，實際日期須以總統府及主管機關公告為準（本頁 2026／08／15 整理）。個案情況、遺囑與信託的實際規劃，請洽律師或地政士。</p>
+    <p><span class="handle">@ivy_073</span>　2026／08 整理</p>
+  </footer>
+
+</div>
+
+<script>
+  // 浮水印鋪滿視窗：數量隨螢幕大小算，手機不會過密、桌機不會露白。
+  (function () {
+    var wm = document.querySelector('.watermark');
+    if (!wm) return;
+    function fill() {
+      var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+      n = Math.min(Math.max(n, 24), 160);
+      if (wm.childElementCount === n) return;
+      wm.textContent = '';
+      for (var i = 0; i < n; i++) {
+        var s = document.createElement('span');
+        s.textContent = '@ivy_073';
+        wm.appendChild(s);
+      }
+    }
+    fill();
+    window.addEventListener('resize', fill);
+  })();
+</script>

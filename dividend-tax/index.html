@@ -1,0 +1,530 @@
+<title>配息課稅速查</title>
+<style>
+  /* ── 沿用 Ivy 圖卡系統的色票（口播測試/cards.py）──────────────── */
+  :root {
+    --ground:    #F3F1E4;
+    --surface:   #FCFDF5;
+    --chip:      #E9E6DB;
+    --line:      #DEDACD;
+    --ink:       #1A1A16;
+    --ink-soft:  #6C6860;
+    --accent:    #B86048;
+    --key:       #C9603F;
+    --good:      #4EA86C;
+    --warn:      #C65842;
+    --on-accent: #FFF0E1;
+    --shadow:    0 2px 10px rgba(26, 26, 22, .07), 0 8px 28px rgba(26, 26, 22, .05);
+
+    --wm-color:  #1A1A16;
+    --wm-alpha:  .075;
+
+    --font-sans: "Noto Sans TC", "PingFang TC", "Hiragino Sans TC",
+                 "Microsoft JhengHei", system-ui, sans-serif;
+    --font-serif: "Noto Serif TC", "Songti TC", "PingFang TC", serif;
+
+    --step: clamp(.9rem, .86rem + .2vw, 1rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:    #16150F;
+      --surface:   #211F17;
+      --chip:      #2C2920;
+      --line:      #343126;
+      --ink:       #F1EEE2;
+      --ink-soft:  #A29C8E;
+      --accent:    #D9805F;
+      --key:       #E08B62;
+      --good:      #6DC48D;
+      --warn:      #E0765C;
+      --on-accent: #221009;
+      --wm-color:  #F1EEE2;
+      --wm-alpha:  .06;
+      --shadow:    0 2px 10px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:    #16150F;
+    --surface:   #211F17;
+    --chip:      #2C2920;
+    --line:      #343126;
+    --ink:       #F1EEE2;
+    --ink-soft:  #A29C8E;
+    --accent:    #D9805F;
+    --key:       #E08B62;
+    --good:      #6DC48D;
+    --warn:      #E0765C;
+    --on-accent: #221009;
+    --wm-color:  #F1EEE2;
+    --wm-alpha:  .06;
+    --shadow:    0 2px 10px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .3);
+  }
+
+  * { box-sizing: border-box; }
+
+  /* ── 浮水印：固定在視窗上層，捲到哪截圖到哪都帶得到 ──────────
+     壓在內容上是刻意的（防截圖盜用），pointer-events:none 不影響選字。 */
+  .watermark {
+    position: fixed;
+    inset: -25%;
+    z-index: 5;
+    pointer-events: none;
+    user-select: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    gap: 3.4rem 3.2rem;
+    transform: rotate(-24deg);
+    font-family: var(--font-serif);
+    font-weight: 900;
+    font-size: 1.05rem;
+    letter-spacing: .1em;
+    color: var(--wm-color);
+    opacity: var(--wm-alpha);
+    white-space: nowrap;
+  }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--step);
+    line-height: 1.7;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.15rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  section { display: flex; flex-direction: column; gap: 1rem; }
+
+  h1, h2, h3 { margin: 0; text-wrap: balance; line-height: 1.35; }
+
+  h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.9rem, 1.4rem + 2.4vw, 2.6rem);
+    font-weight: 900;
+    letter-spacing: -.01em;
+  }
+  h1 .em { color: var(--key); display: block; }
+
+  h2 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.3rem, 1.1rem + .9vw, 1.6rem);
+    font-weight: 900;
+  }
+
+  .kicker {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+  }
+
+  .lede { color: var(--ink-soft); margin: 0; }
+
+  /* ── 卡片：左側色條是 Ivy 圖卡的既有語彙 ───────────────────── */
+  .card {
+    background: var(--surface);
+    border-radius: 1.1rem;
+    box-shadow: var(--shadow);
+    padding: 1.1rem 1.25rem;
+    border-left: .38rem solid var(--line);
+  }
+  .card.taxed   { border-left-color: var(--warn); }
+  .card.free    { border-left-color: var(--good); }
+  .card.note    { border-left-color: var(--key); }
+
+  .card h3 {
+    font-size: 1.02rem;
+    font-weight: 900;
+    display: flex;
+    align-items: baseline;
+    gap: .55rem;
+    flex-wrap: wrap;
+  }
+  .code {
+    font-family: var(--font-serif);
+    font-size: 1.45rem;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: .02em;
+  }
+  .card p { margin: .5rem 0 0; }
+  .card .from { color: var(--ink-soft); }
+
+  .verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .75rem;
+    padding: .3rem .8rem;
+    border-radius: 2rem;
+    font-weight: 900;
+    font-size: .9rem;
+    color: var(--on-accent);
+  }
+  .verdict.yes { background: var(--warn); }
+  .verdict.no  { background: var(--good); }
+
+  .aside {
+    margin-top: .8rem;
+    padding: .7rem .85rem;
+    background: var(--chip);
+    border-radius: .7rem;
+    font-size: .85rem;
+    color: var(--ink-soft);
+  }
+  .aside strong { color: var(--key); font-weight: 900; }
+
+  /* ── 速查表：最常被截圖的一塊 ─────────────────────────────── */
+  .table-shell { overflow-x: auto; }
+  table {
+    width: 100%;
+    min-width: 20rem;
+    border-collapse: collapse;
+    background: var(--surface);
+    border-radius: 1.1rem;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+  }
+  caption {
+    caption-side: top;
+    text-align: left;
+    padding-bottom: .7rem;
+    color: var(--ink-soft);
+    font-size: .88rem;
+  }
+  th, td { padding: .8rem .85rem; text-align: left; vertical-align: top; }
+  thead th {
+    font-size: .74rem;
+    letter-spacing: .1em;
+    color: var(--ink-soft);
+    font-weight: 700;
+    border-bottom: 1px solid var(--line);
+  }
+  thead th:not(:first-child), tbody td:not(:first-child) { text-align: center; }
+  tbody tr + tr td { border-top: 1px solid var(--line); }
+  tbody th { font-weight: 900; font-size: .93rem; }
+  .yes { color: var(--warn); font-weight: 900; }
+  .no  { color: var(--good); font-weight: 900; }
+  .sub { display: block; font-size: .76rem; color: var(--ink-soft); font-weight: 400; }
+
+  /* ── 結論塊 ──────────────────────────────────────────────── */
+  .verdict-block {
+    background: var(--accent);
+    color: var(--on-accent);
+    border-radius: 1.1rem;
+    padding: 1.35rem 1.25rem;
+    box-shadow: var(--shadow);
+  }
+  .verdict-block p { margin: 0; }
+  .verdict-block .big {
+    font-family: var(--font-serif);
+    font-size: 1.45rem;
+    font-weight: 900;
+    margin-top: .3rem;
+    line-height: 1.4;
+  }
+  .verdict-block .fine { margin-top: .85rem; font-size: .78rem; opacity: .85; }
+
+  .answer {
+    background: var(--good);
+    color: var(--on-accent);
+    border-radius: 1.1rem;
+    padding: 1.35rem 1.25rem;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .answer .big {
+    font-family: var(--font-serif);
+    font-size: 2.1rem;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+  .answer p { margin: .35rem 0 0; font-weight: 700; }
+
+  /* ── 兩欄對照（扣繳憑單那組 / 二擇一）─────────────────────── */
+  .rows { display: flex; flex-direction: column; gap: .6rem; }
+  .row {
+    background: var(--surface);
+    border-radius: .85rem;
+    box-shadow: var(--shadow);
+    padding: .85rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .row .k { font-weight: 900; }
+  .row .v { color: var(--accent); font-weight: 700; text-align: right; }
+
+  .calc .row .v {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+  .calc .row.total { border-left: .38rem solid var(--warn); }
+  .calc .row.total .v { color: var(--warn); }
+  .calc .row .why { flex-basis: 100%; font-size: .8rem; color: var(--ink-soft); }
+
+  .pull {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--key);
+    line-height: 1.55;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .pull .quiet { display: block; color: var(--ink-soft); font-size: .95rem; font-weight: 700; }
+
+  /* ── 頁尾 ────────────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    font-size: .82rem;
+    color: var(--ink-soft);
+  }
+  footer ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .3rem; }
+  footer .disclaim { color: var(--warn); font-weight: 700; }
+  .handle {
+    font-family: var(--font-serif);
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: .04em;
+  }
+
+  .more {
+    display: inline-block;
+    background: var(--chip);
+    color: var(--accent);
+    font-weight: 900;
+    text-decoration: none;
+    padding: .7rem 1.1rem;
+    border-radius: .8rem;
+    align-self: flex-start;
+  }
+  .more:hover, .more:focus-visible { background: var(--accent); color: var(--on-accent); }
+  .more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="watermark" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <header>
+    <p class="kicker">ETF 配息課稅　速查</p>
+    <h1>你領到的配息<span class="em">不是同一種錢</span></h1>
+    <p class="lede">54C、76W、收益平準金——通知書上是分開列的三塊錢，只有一塊要進你的所得。這頁講怎麼看，還有為什麼你不用自己扣。</p>
+  </header>
+
+  <section>
+    <div class="answer">
+      <p class="big">40 萬配息<br>≠ 應稅所得 40 萬</p>
+      <p>分類這件事，投信跟券商早就幫你做完了</p>
+    </div>
+    <div class="card note">
+      <h3>先講一句最重要的</h3>
+      <p>ETF 配給你的那一筆錢，在通知書上是「<strong>分開列</strong>」的。</p>
+      <p>所以你不能拿配息總額，直接乘上你的所得稅率。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>那三塊錢分別是什麼</h2>
+
+    <div class="card taxed">
+      <h3><span class="code">54C</span> 股利或盈餘所得</h3>
+      <p class="from">這筆錢從哪來：ETF 收到成分股公司發的股利，再分配給你。</p>
+      <span class="verdict yes">要課稅</span>
+      <p>計入你的綜合所得總額。</p>
+      <p class="aside">單次給付達 2 萬元，還要另外扣 <strong>2.11%</strong> 二代健保補充保費。</p>
+    </div>
+
+    <div class="card free">
+      <h3><span class="code">76W</span> 財產交易所得</h3>
+      <p class="from">這筆錢從哪來：ETF 調整持股時，賣掉股票賺到的價差。</p>
+      <span class="verdict no">不課稅</span>
+      <p>個人證所稅停徵，不課所得稅。</p>
+      <p class="aside">個人證券交易所得，自民國 <strong>105 年起停徵</strong>。</p>
+    </div>
+
+    <div class="card free">
+      <h3><span class="code">收益平準金</span></h3>
+      <p class="from">通知書上沒有代號，直接寫名稱。新資金進來時從裡面撥出的，避免原本的人配息被稀釋。</p>
+      <span class="verdict no">不課稅</span>
+      <p>返還你自己的本金，不算所得。</p>
+      <p class="aside">它不是「多給你錢」，<strong>是把你自己的本金還你</strong>。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>一張表看完</h2>
+    <div class="table-shell">
+      <table>
+        <caption>配息通知書上的三塊錢，各自怎麼算</caption>
+        <thead>
+          <tr><th scope="col">項目</th><th scope="col">所得稅</th><th scope="col">二代健保</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">54C｜股利或盈餘所得</th>
+            <td class="yes">要課</td>
+            <td class="yes">扣<span class="sub">單次達 2 萬扣 2.11%</span></td>
+          </tr>
+          <tr>
+            <th scope="row">76W｜財產交易所得</th>
+            <td class="no">不課</td>
+            <td class="no">不計</td>
+          </tr>
+          <tr>
+            <th scope="row">收益平準金</th>
+            <td class="no">不課</td>
+            <td class="no">不計</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="verdict-block">
+      <p>所以真正進到你所得裡的</p>
+      <p class="big">只有 54C 那一塊</p>
+      <p class="fine">※ 二代健保補充保費實際計收，視個人身分與給付情況。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>那我要自己把不用課稅的扣掉嗎？</h2>
+    <div class="answer">
+      <p class="big">不用。</p>
+      <p>早就幫你分好了</p>
+    </div>
+    <div class="rows">
+      <div class="row"><span class="k">券商寄的扣繳憑單</span><span class="v">上面只會有 54C</span></div>
+      <div class="row"><span class="k">報稅時下載的所得資料</span><span class="v">平準金和 76W 不會進去</span></div>
+      <div class="row"><span class="k">你想多報</span><span class="v">也報不到</span></div>
+    </div>
+    <p class="pull">
+      <span class="quiet">看到有人叫你「把平準金扣掉再報」——</span>
+      先確認那筆稅，你到底有沒有繳過。
+    </p>
+  </section>
+
+  <section>
+    <h2>那 40 萬配息，最多會被課多少？</h2>
+    <p class="lede">極端假設：40 萬「全部」都是 54C，而且直接選 28% 分開計稅。</p>
+    <div class="rows calc">
+      <div class="row">
+        <span class="k">所得稅（28% 分開計稅）</span><span class="v">11.2 萬</span>
+        <span class="why">40 萬 × 28%</span>
+      </div>
+      <div class="row">
+        <span class="k">二代健保補充保費</span><span class="v">約 0.84 萬</span>
+        <span class="why">40 萬 × 2.11%（若符合計收條件）</span>
+      </div>
+      <div class="row total">
+        <span class="k">合計（天花板）</span><span class="v">約 12 萬</span>
+        <span class="why">而且這是「全部都是 54C」的極端假設</span>
+      </div>
+    </div>
+    <p class="pull">
+      <span class="quiet">所得稅和二代健保是兩套不同制度，不是二選一。</span>
+      真正的稅只會更低——因為 40 萬不會全部都是 54C。
+    </p>
+  </section>
+
+  <section>
+    <h2>54C 有兩種算法</h2>
+    <p class="lede">報稅時二擇一，可以自己選。</p>
+    <div class="card note">
+      <h3>合併計稅</h3>
+      <p>併入綜合所得稅。可抵減股利的 <strong>8.5%</strong>，每戶上限 8 萬元。</p>
+    </div>
+    <div class="card note">
+      <h3>分開計稅</h3>
+      <p>股利單獨以 <strong>28%</strong> 計算。不併入綜所稅，也不能用 8.5% 抵減。</p>
+    </div>
+    <p class="pull">
+      <span class="quiet">哪一種划算，看你自己的所得狀況。</span>
+      報稅軟體會兩種都幫你試算，選數字小的那個。
+    </p>
+  </section>
+
+  <section>
+    <h2>去哪裡看你的配息組成</h2>
+    <p class="lede">三個地方，任何一個都查得到。</p>
+    <div class="rows">
+      <div class="row"><span class="k">投信官網／券商 App</span><span class="v">找「收益分配通知書」或「收益分配組成」</span></div>
+      <div class="row"><span class="k">券商寄的扣繳憑單</span><span class="v">上面只會有 54C，這就是你的應稅金額</span></div>
+      <div class="row"><span class="k">報稅時下載的所得資料</span><span class="v">國稅局給的資料已經分好，不用自己扣</span></div>
+    </div>
+    <p class="pull">
+      <span class="quiet">配息率高不高是一回事，</span>
+      那筆錢是從哪裡來的，是另一回事。
+    </p>
+  </section>
+
+  <section>
+    <div class="verdict-block">
+      <p>我不教你買什麼，只教你看懂你買的是什麼。</p>
+      <p class="big">金融工具沒有好壞</p>
+      <p>差別只在你知不知道它拿來解決什麼問題。</p>
+    </div>
+  </section>
+
+  <section>
+    <a class="more" href="../">看其他懶人包 →</a>
+  </section>
+
+  <footer>
+    <div>
+      <strong>資料來源</strong>
+      <ul>
+        <li>財政部稅務入口網　綜合所得稅・股利所得課稅二擇一</li>
+        <li>所得稅法第 4 條之 1（個人證券交易所得停徵）</li>
+        <li>全民健康保險補充保險費　費率 2.11%</li>
+        <li>各投信「收益分配通知書／收益分配組成」公告</li>
+      </ul>
+    </div>
+    <p class="disclaim">本表為一般性稅務觀念整理，不構成個案建議。</p>
+    <p>二代健保實際是否計收，須視個人身分與給付情況而定。個案情況請洽會計師或國稅局。</p>
+    <p><span class="handle">@ivy_073</span>　2026／08 整理</p>
+  </footer>
+
+</div>
+
+<script>
+  // 浮水印鋪滿視窗：數量隨螢幕大小算，手機不會過密、桌機不會露白。
+  (function () {
+    var wm = document.querySelector('.watermark');
+    if (!wm) return;
+    function fill() {
+      var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+      n = Math.min(Math.max(n, 24), 160);
+      if (wm.childElementCount === n) return;
+      wm.textContent = '';
+      for (var i = 0; i < n; i++) {
+        var s = document.createElement('span');
+        s.textContent = '@ivy_073';
+        wm.appendChild(s);
+      }
+    }
+    fill();
+    window.addEventListener('resize', fill);
+  })();
+</script>
