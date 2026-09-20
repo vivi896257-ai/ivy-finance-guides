@@ -1,0 +1,458 @@
+<title>退休缺口試算</title>
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票，與各懶人包內頁同一套 ── */
+  :root {
+    --ground:    #F3F1E4;
+    --surface:   #FCFDF5;
+    --chip:      #E9E6DB;
+    --line:      #DEDACD;
+    --ink:       #1A1A16;
+    --ink-soft:  #6C6860;
+    --accent:    #B86048;
+    --key:       #C9603F;
+    --good:      #4EA86C;
+    --warn:      #C65842;
+    --on-accent: #FFF0E1;
+    --shadow:    0 2px 10px rgba(26, 26, 22, .07), 0 8px 28px rgba(26, 26, 22, .05);
+    --wm-color:  #1A1A16;
+    --wm-alpha:  .075;
+    --font-sans: "Noto Sans TC", "PingFang TC", "Hiragino Sans TC",
+                 "Microsoft JhengHei", system-ui, sans-serif;
+    --font-serif: "Noto Serif TC", "Songti TC", "PingFang TC", serif;
+    --step: clamp(.9rem, .86rem + .2vw, 1rem);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+      --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+      --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+      --wm-color:#F1EEE2; --wm-alpha:.06;
+      --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+    --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+    --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+    --wm-color:#F1EEE2; --wm-alpha:.06;
+    --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--font-sans); font-size: var(--step);
+    line-height: 1.7; -webkit-text-size-adjust: 100%;
+  }
+
+  .watermark {
+    position: fixed; inset: -25%; z-index: 0;
+    pointer-events: none; user-select: none;
+    display: flex; flex-wrap: wrap; align-content: center; justify-content: center;
+    gap: 3.4rem 3.2rem; transform: rotate(-24deg);
+    font-family: var(--font-serif); font-weight: 900; font-size: 1.05rem;
+    letter-spacing: .1em; color: var(--wm-color); opacity: var(--wm-alpha); white-space: nowrap;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 34rem; margin: 0 auto; padding: 2.2rem 1.15rem 3.5rem; }
+
+  a.back { display: inline-block; color: var(--ink-soft); text-decoration: none; font-size: .85rem; margin-bottom: 1.2rem; }
+  a.back:hover { color: var(--accent); }
+
+  header h1 {
+    font-family: var(--font-serif); font-weight: 900; line-height: 1.25;
+    font-size: clamp(1.7rem, 1.3rem + 2vw, 2.3rem); margin: 0 0 .5rem;
+  }
+  header h1 span { display: block; font-size: .5em; color: var(--accent); letter-spacing: .04em; margin-top: .5rem; }
+  .lede { color: var(--ink-soft); margin: 0 0 1.6rem; font-size: .95rem; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 1.1rem; box-shadow: var(--shadow);
+    padding: 1.15rem 1.15rem 1.3rem; margin-bottom: 1.15rem;
+  }
+  .card > h2 {
+    font-size: .74rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 .9rem; font-weight: 700;
+  }
+
+  .field { margin-bottom: .95rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: .9rem; font-weight: 600; margin-bottom: .3rem; }
+  .field .hint { display: block; font-size: .78rem; color: var(--ink-soft); font-weight: 400; margin-top: .15rem; line-height: 1.5; }
+  .field .row { display: flex; align-items: center; gap: .5rem; margin-top: .4rem; }
+  .field input[type=number] {
+    flex: 1 1 auto; width: 100%; min-width: 0;
+    font: inherit; font-variant-numeric: tabular-nums;
+    padding: .55rem .7rem; border: 1px solid var(--line);
+    border-radius: .6rem; background: var(--ground); color: var(--ink);
+  }
+  .field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .unit { flex: 0 0 auto; color: var(--ink-soft); font-size: .85rem; }
+
+  button.go {
+    width: 100%; font: inherit; font-weight: 700; font-size: 1.02rem;
+    padding: .85rem 1rem; border: 0; border-radius: .8rem;
+    background: var(--accent); color: var(--on-accent); cursor: pointer;
+  }
+  button.go:active { transform: translateY(1px); }
+
+  #out { display: none; }
+  #out.on { display: block; }
+
+  .big-num {
+    font-family: var(--font-serif); font-weight: 900;
+    font-size: clamp(2rem, 1.4rem + 3vw, 2.9rem);
+    line-height: 1.15; color: var(--key); margin: .2rem 0 .1rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .big-cap { font-size: .8rem; letter-spacing: .1em; color: var(--ink-soft); }
+  .big-sub { font-size: .9rem; color: var(--ink-soft); margin-top: .5rem; }
+
+  table.bd { width: 100%; border-collapse: collapse; font-size: .9rem; font-variant-numeric: tabular-nums; }
+  table.bd td { padding: .45rem 0; border-bottom: 1px dashed var(--line); vertical-align: top; }
+  table.bd tr:last-child td { border-bottom: 0; }
+  table.bd td:last-child { text-align: right; white-space: nowrap; font-weight: 600; }
+  table.bd tr.sum td { border-top: 2px solid var(--line); border-bottom: 0; padding-top: .6rem; color: var(--key); font-weight: 700; }
+
+  details.how { margin-top: .8rem; border-top: 1px solid var(--line); padding-top: .7rem; }
+  details.how summary {
+    cursor: pointer; font-size: .82rem; color: var(--accent);
+    font-weight: 600; list-style: none;
+  }
+  details.how summary::-webkit-details-marker { display: none; }
+  details.how summary::before { content: "▸ "; }
+  details.how[open] summary::before { content: "▾ "; }
+  details.how .body { font-size: .85rem; color: var(--ink-soft); margin-top: .55rem; }
+  details.how code {
+    display: block; background: var(--chip); border-radius: .45rem;
+    padding: .5rem .6rem; margin: .45rem 0; font-size: .82rem;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color: var(--ink); overflow-x: auto; white-space: pre-wrap;
+  }
+
+  .note { background: var(--chip); border-radius: .7rem; padding: .7rem .85rem; font-size: .84rem; color: var(--ink-soft); margin-top: .9rem; }
+  .note b { color: var(--ink); }
+
+  .cta { background: var(--accent); color: var(--on-accent); border-radius: 1.1rem; padding: 1.3rem 1.15rem; text-align: center; margin-top: 1.4rem; }
+  .cta p.big { font-family: var(--font-serif); font-weight: 900; font-size: 1.25rem; margin: 0 0 .5rem; line-height: 1.4; }
+  .cta p.sub { margin: 0; font-size: .9rem; opacity: .92; }
+
+  footer { margin-top: 2.2rem; font-size: .82rem; color: var(--ink-soft); }
+  footer .disclaim { border-top: 1px solid var(--line); padding-top: .9rem; }
+  footer .handle { color: var(--accent); font-weight: 700; }
+</style>
+
+<div class="watermark" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <a class="back" href="../">← 回到懶人包首頁</a>
+
+  <header>
+    <h1>退休缺口試算<span>先算出數字，再談怎麼補</span></h1>
+  </header>
+  <p class="lede">
+    退休金不是「有或沒有」的問題，是「制度給你多少、你還差多少」。
+    這裡不推薦任何商品，只把你的缺口算出來。
+  </p>
+
+  <div class="card">
+    <h2>① 你想要的退休生活</h2>
+
+    <div class="field">
+      <label for="age">目前年齡
+        <span class="hint">用來算距離退休還有幾年</span>
+      </label>
+      <div class="row"><input type="number" id="age" value="42" min="18" max="75"><span class="unit">歲</span></div>
+    </div>
+
+    <div class="field">
+      <label for="retAge">預計退休年齡</label>
+      <div class="row"><input type="number" id="retAge" value="65" min="45" max="80"><span class="unit">歲</span></div>
+    </div>
+
+    <div class="field">
+      <label for="years">退休後要準備幾年
+        <span class="hint">國人平均餘命逐年延長，一般會抓 20–30 年</span>
+      </label>
+      <div class="row"><input type="number" id="years" value="25" min="5" max="45"><span class="unit">年</span></div>
+    </div>
+
+    <div class="field">
+      <label for="need">希望退休後每月可以花多少
+        <span class="hint">用今天的物價想就好，通膨我幫你換算</span>
+      </label>
+      <div class="row"><input type="number" id="need" value="40000" min="0" step="1000"><span class="unit">元／月</span></div>
+    </div>
+
+    <div class="field">
+      <label for="inf">通膨假設
+        <span class="hint">假設值，不是預測。想看「不考慮通膨」就填 0</span>
+      </label>
+      <div class="row"><input type="number" id="inf" value="2" min="0" max="10" step="0.1"><span class="unit">%／年</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>② 制度會給你多少</h2>
+
+    <div class="field">
+      <label for="li">勞保老年年金・預估每月可領
+        <span class="hint">
+          不知道就先留 0。查法：勞保局 e 化服務系統 → 個人網路申報及查詢 → 老年給付金額試算。
+          下面「怎麼算的」有公式可以自己粗估。
+        </span>
+      </label>
+      <div class="row"><input type="number" id="li" value="0" min="0" step="500"><span class="unit">元／月</span></div>
+    </div>
+
+    <div class="field">
+      <label for="lpNow">勞退個人專戶・目前累積金額
+        <span class="hint">同一個系統查得到。這是你自己的錢，不是勞保</span>
+      </label>
+      <div class="row"><input type="number" id="lpNow" value="0" min="0" step="10000"><span class="unit">元</span></div>
+    </div>
+
+    <div class="field">
+      <label for="lpMon">勞退・每月進帳金額
+        <span class="hint">雇主提繳 6%（＋你自提的部分）。不確定就填月薪 × 6%</span>
+      </label>
+      <div class="row"><input type="number" id="lpMon" value="0" min="0" step="500"><span class="unit">元／月</span></div>
+    </div>
+
+    <div class="field">
+      <label for="own">已經準備的退休資產
+        <span class="hint">已經確定是「退休才會動」的那一筆。不含緊急預備金與生活備用金</span>
+      </label>
+      <div class="row"><input type="number" id="own" value="0" min="0" step="10000"><span class="unit">元</span></div>
+    </div>
+
+    <div class="field">
+      <label for="ret">退休前的年化報酬假設
+        <span class="hint">
+          ⚠️ 這是<b>假設值，不是任何商品的預期報酬</b>。
+          想看最保守的情況就填 0
+        </span>
+      </label>
+      <div class="row"><input type="number" id="ret" value="3" min="0" max="12" step="0.1"><span class="unit">%／年</span></div>
+    </div>
+  </div>
+
+  <button class="go" id="calc">算出我的缺口</button>
+
+  <div id="out">
+
+    <div class="card" style="text-align:center">
+      <p class="big-cap">你的退休缺口</p>
+      <p class="big-num" id="gapTotal">—</p>
+      <p class="big-sub" id="gapSub">—</p>
+    </div>
+
+    <div class="card">
+      <h2>③ 數字是怎麼來的</h2>
+      <table class="bd">
+        <tr><td>退休時的每月需求<span class="hint" id="infNote"></span></td><td id="needFut">—</td></tr>
+        <tr><td>勞保老年年金</td><td id="rLi">—</td></tr>
+        <tr><td>勞退專戶換算月領</td><td id="rLp">—</td></tr>
+        <tr><td>自有退休資產換算月領</td><td id="rOwn">—</td></tr>
+        <tr class="sum"><td>每月還差</td><td id="rGap">—</td></tr>
+      </table>
+
+      <details class="how">
+        <summary>退休時的每月需求怎麼算</summary>
+        <div class="body">
+          今天覺得夠用的金額，到退休那年會因為通膨變貴。
+          <code>退休時月需求 ＝ 今日月需求 × (1 + 通膨率) ^ 距離退休年數</code>
+          通膨率是你自己填的假設值。填 0 就等於直接用今天的物價看。
+        </div>
+      </details>
+
+      <details class="how">
+        <summary>勞保老年年金怎麼粗估</summary>
+        <div class="body">
+          勞保局公式是兩式取金額高者：
+          <code>A式 ＝ 平均月投保薪資 × 年資 × 0.775% ＋ 3,000
+B式 ＝ 平均月投保薪資 × 年資 × 1.55%</code>
+          「平均月投保薪資」是加保期間最高 60 個月的平均。
+          年資越長，通常 B 式會比較高。
+          <b>提早請領會減給、延後請領會增給</b>，這裡沒有算進去。
+          ⚠️ 制度與給付標準會調整，<b>實際金額一律以勞保局試算為準</b>。
+        </div>
+      </details>
+
+      <details class="how">
+        <summary>勞退專戶怎麼換算成月領</summary>
+        <div class="body">
+          先把專戶滾到你退休那一年：
+          <code>退休時金額 ＝ 現有金額 × (1+r)^n
+              ＋ 每月進帳 × 12 × [((1+r)^n − 1) ÷ r]</code>
+          r ＝ 你填的年化報酬假設，n ＝ 距離退休年數。
+          再除以你要準備的月數，得到平均每月可用金額：
+          <code>月領 ＝ 退休時金額 ÷ (退休後年數 × 12)</code>
+          <b>這是「平均分完」的簡化算法</b>，跟勞保局實際的年金化公式（依平均餘命與保證收益）不同，
+          只拿來看量級，不能當作實際給付。
+        </div>
+      </details>
+
+      <details class="how">
+        <summary>總缺口怎麼算</summary>
+        <div class="body">
+          <code>總缺口 ＝ 每月還差 × 12 × 退休後年數</code>
+          刻意<b>不折現、不再假設退休後的投資報酬</b>——
+          因為那會讓缺口看起來變小，但那筆報酬並不保證會發生。
+          這裡取的是比較保守的版本。
+        </div>
+      </details>
+
+      <div class="note">
+        <b>這個缺口只算生活費。</b>
+        醫療、長期照顧、重大疾病都還沒有算進去——
+        那三項的特性是「不一定發生，但一發生就是一整筆」，
+        跟每月生活費是兩種錢，要分開準備。
+      </div>
+    </div>
+
+    <div class="card" id="saveCard">
+      <h2>④ 那現在開始要存多少</h2>
+      <table class="bd">
+        <tr><td>距離退休還有</td><td id="sYears">—</td></tr>
+        <tr class="sum"><td>每月需要再存</td><td id="sMon">—</td></tr>
+      </table>
+      <details class="how">
+        <summary>這個數字怎麼算</summary>
+        <div class="body">
+          把總缺口當成一個要在退休那天存到的目標，用年金終值公式反推每月金額：
+          <code>每月需存 ＝ 目標 × (r/12) ÷ [ (1 + r/12)^(n×12) − 1 ]</code>
+          r ＝ 年化報酬假設，n ＝ 距離退休年數。r 填 0 時直接用目標 ÷ 總月數。
+          <b>報酬率是假設值</b>，填越高這個數字看起來越小——
+          但那不代表比較輕鬆，只代表你把責任交給了市場。
+        </div>
+      </details>
+    </div>
+
+    <div class="cta">
+      <p class="big">算出來的數字，<br>比你想的大還是小？</p>
+      <p class="sub">
+        這張表只做一件事：把缺口看清楚。<br>
+        缺口之後要怎麼補、哪些風險要另外處理，<br>
+        那要看你整體的收入、資產跟現金流。
+      </p>
+    </div>
+
+  </div>
+
+  <footer>
+    <p class="disclaim">
+      本頁為一般性退休規劃的觀念與數學試算工具，<b>不構成個案建議，也不是任何特定商品的推介</b>。
+      報酬率與通膨率皆為你自行輸入的假設值，不代表任何預期或保證收益。
+    </p>
+    <p>
+      勞保與勞退的實際給付金額，請以<b>勞動部勞工保險局</b>的正式試算與核定為準；
+      稅務與法律的個案情況，請洽會計師、國稅局或律師。
+    </p>
+    <p>本頁所有計算都在你的手機／電腦上完成，<b>不會上傳、不會儲存任何資料</b>。</p>
+    <p><span class="handle">@ivy_073</span>　2026／09</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  // 浮水印
+  var wm = document.querySelector('.watermark');
+  function fillWM() {
+    if (!wm) return;
+    var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+    n = Math.min(Math.max(n, 24), 160);
+    if (wm.childElementCount === n) return;
+    wm.textContent = '';
+    for (var i = 0; i < n; i++) {
+      var s = document.createElement('span');
+      s.textContent = '@ivy_073';
+      wm.appendChild(s);
+    }
+  }
+  fillWM();
+  window.addEventListener('resize', fillWM);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var num = function (id) { var v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+
+  function money(v) {
+    v = Math.round(v);
+    return v.toLocaleString('zh-TW');
+  }
+  function wan(v) {
+    // 大數字用「萬」讓人有感
+    var w = v / 10000;
+    if (Math.abs(w) >= 1000) return (w / 10000).toFixed(2) + ' 億';
+    return w.toFixed(w >= 100 ? 0 : 1) + ' 萬';
+  }
+
+  function calc() {
+    var age = num('age'), retAge = num('retAge'), years = num('years');
+    var need = num('need'), inf = num('inf') / 100, r = num('ret') / 100;
+    var li = num('li'), lpNow = num('lpNow'), lpMon = num('lpMon'), own = num('own');
+
+    var n = Math.max(retAge - age, 0);          // 距離退休年數
+    var months = Math.max(years * 12, 1);       // 退休後總月數
+
+    // 退休時的月需求（通膨調整）
+    var needFut = need * Math.pow(1 + inf, n);
+
+    // 資產滾到退休那年
+    function fv(pv, pmtMonthly) {
+      var lump = pv * Math.pow(1 + r, n);
+      var annual = pmtMonthly * 12;
+      var ann = r === 0 ? annual * n : annual * (Math.pow(1 + r, n) - 1) / r;
+      return lump + ann;
+    }
+    var lpFut = fv(lpNow, lpMon);
+    var ownFut = fv(own, 0);
+
+    var lpM = lpFut / months;
+    var ownM = ownFut / months;
+
+    var gapM = Math.max(needFut - li - lpM - ownM, 0);
+    var gapTotal = gapM * months;
+
+    $('needFut').textContent = money(needFut) + ' 元';
+    $('infNote').textContent = inf > 0
+      ? '（今日 ' + money(need) + ' 元，' + n + ' 年後）'
+      : '（未計通膨）';
+    $('rLi').textContent  = money(li) + ' 元';
+    $('rLp').textContent  = money(lpM) + ' 元';
+    $('rOwn').textContent = money(ownM) + ' 元';
+    $('rGap').textContent = money(gapM) + ' 元';
+
+    if (gapTotal <= 0) {
+      $('gapTotal').textContent = '0 元';
+      $('gapSub').textContent = '依你填的數字，制度加上你已經準備的資產，已經可以覆蓋這個目標。';
+      $('saveCard').style.display = 'none';
+    } else {
+      $('gapTotal').textContent = wan(gapTotal);
+      $('gapSub').textContent =
+        '每月差 ' + money(gapM) + ' 元 × ' + years + ' 年＝' + wan(gapTotal) +
+        '。這還只是生活費。';
+      $('saveCard').style.display = '';
+
+      // 每月需存
+      var monNeed;
+      if (n <= 0) monNeed = gapTotal;
+      else if (r === 0) monNeed = gapTotal / (n * 12);
+      else {
+        var i = r / 12, N = n * 12;
+        monNeed = gapTotal * i / (Math.pow(1 + i, N) - 1);
+      }
+      $('sYears').textContent = n + ' 年（' + (n * 12) + ' 個月）';
+      $('sMon').textContent = money(monNeed) + ' 元';
+    }
+
+    $('out').classList.add('on');
+    $('out').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  $('calc').addEventListener('click', calc);
+})();
+</script>
