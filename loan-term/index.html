@@ -1,0 +1,407 @@
+<title>房貸年期試算</title>
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票，與各懶人包內頁同一套 ── */
+  :root {
+    --ground:#F3F1E4; --surface:#FCFDF5; --chip:#E9E6DB; --line:#DEDACD;
+    --ink:#1A1A16; --ink-soft:#6C6860; --accent:#B86048; --key:#C9603F;
+    --good:#4EA86C; --warn:#C65842; --on-accent:#FFF0E1;
+    --shadow: 0 2px 10px rgba(26,26,22,.07), 0 8px 28px rgba(26,26,22,.05);
+    --wm-color:#1A1A16; --wm-alpha:.075;
+    --font-sans: "Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    --font-serif: "Noto Serif TC","Songti TC","PingFang TC",serif;
+    --step: clamp(.9rem,.86rem + .2vw,1rem);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+      --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+      --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+      --wm-color:#F1EEE2; --wm-alpha:.06;
+      --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+    --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+    --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+    --wm-color:#F1EEE2; --wm-alpha:.06;
+    --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--font-sans); font-size:var(--step);
+    line-height:1.7; -webkit-text-size-adjust:100%;
+  }
+  .watermark {
+    position:fixed; inset:-25%; z-index:0; pointer-events:none; user-select:none;
+    display:flex; flex-wrap:wrap; align-content:center; justify-content:center;
+    gap:3.4rem 3.2rem; transform:rotate(-24deg);
+    font-family:var(--font-serif); font-weight:900; font-size:1.05rem;
+    letter-spacing:.1em; color:var(--wm-color); opacity:var(--wm-alpha); white-space:nowrap;
+  }
+  .wrap { position:relative; z-index:1; max-width:34rem; margin:0 auto; padding:2.2rem 1.15rem 3.5rem; }
+
+  a.back { display:inline-block; color:var(--ink-soft); text-decoration:none; font-size:.85rem; margin-bottom:1.2rem; }
+  a.back:hover { color:var(--accent); }
+
+  header h1 {
+    font-family:var(--font-serif); font-weight:900; line-height:1.25;
+    font-size:clamp(1.7rem,1.3rem + 2vw,2.3rem); margin:0 0 .5rem;
+  }
+  header h1 span { display:block; font-size:.5em; color:var(--accent); letter-spacing:.04em; margin-top:.5rem; }
+  .lede { color:var(--ink-soft); margin:0 0 1.6rem; font-size:.95rem; }
+
+  .card {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:1.1rem; box-shadow:var(--shadow);
+    padding:1.15rem 1.15rem 1.3rem; margin-bottom:1.15rem;
+  }
+  .card > h2 {
+    font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 .9rem; font-weight:700;
+  }
+  .card p { margin:0 0 .6rem; }
+  .card p:last-child { margin-bottom:0; }
+
+  .field { margin-bottom:1rem; }
+  .field:last-child { margin-bottom:0; }
+  .field label { display:block; font-size:.9rem; font-weight:600; margin-bottom:.3rem; }
+  .field .hint { display:block; font-size:.78rem; color:var(--ink-soft); font-weight:400; margin-top:.15rem; line-height:1.5; }
+  .field .row { display:flex; align-items:center; gap:.5rem; margin-top:.4rem; }
+  .field input[type=number] {
+    flex:1 1 auto; width:100%; min-width:0; font:inherit; font-variant-numeric:tabular-nums;
+    padding:.55rem .7rem; border:1px solid var(--line); border-radius:.6rem;
+    background:var(--ground); color:var(--ink);
+  }
+  .field input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .unit { flex:0 0 auto; color:var(--ink-soft); font-size:.85rem; }
+
+  input[type=range] { width:100%; accent-color:var(--accent); margin-top:.5rem; }
+  .rate-now { font-weight:700; color:var(--key); font-variant-numeric:tabular-nums; }
+
+  button.go {
+    width:100%; font:inherit; font-weight:700; font-size:1.02rem;
+    padding:.85rem 1rem; border:0; border-radius:.8rem;
+    background:var(--accent); color:var(--on-accent); cursor:pointer;
+  }
+  button.go:active { transform:translateY(1px); }
+
+  #out { display:none; }
+  #out.on { display:block; }
+
+  .flow { display:flex; flex-direction:column; gap:.2rem; }
+  .flow .step { display:flex; justify-content:space-between; align-items:baseline; gap:1rem; padding:.55rem 0; border-bottom:1px dashed var(--line); }
+  .flow .step:last-child { border-bottom:0; }
+  .flow .k { font-size:.9rem; color:var(--ink-soft); }
+  .flow .v {
+    font-family:var(--font-serif); font-weight:900; font-variant-numeric:tabular-nums;
+    font-size:clamp(1.35rem,1.1rem + 1.4vw,1.8rem); color:var(--ink); white-space:nowrap;
+  }
+  .flow .step.hi .v { color:var(--key); font-size:clamp(1.7rem,1.3rem + 2.2vw,2.4rem); }
+  .arrow { text-align:center; color:var(--ink-soft); font-size:.8rem; line-height:1; }
+
+  table.bd { width:100%; border-collapse:collapse; font-size:.9rem; font-variant-numeric:tabular-nums; }
+  table.bd th { text-align:right; font-size:.76rem; letter-spacing:.06em; color:var(--ink-soft); padding:.35rem 0 .35rem .4rem; border-bottom:1px solid var(--line); font-weight:600; }
+  table.bd th:first-child, table.bd td:first-child { text-align:left; padding-left:0; }
+  table.bd td { text-align:right; padding:.45rem 0 .45rem .4rem; border-bottom:1px dashed var(--line); white-space:nowrap; }
+  table.bd tr:last-child td { border-bottom:0; }
+  table.bd tr.hi td { color:var(--key); font-weight:800; }
+
+  details.how { margin-top:.9rem; border-top:1px solid var(--line); padding-top:.7rem; }
+  details.how summary { cursor:pointer; font-size:.82rem; color:var(--accent); font-weight:600; list-style:none; }
+  details.how summary::-webkit-details-marker { display:none; }
+  details.how summary::before { content:"▸ "; }
+  details.how[open] summary::before { content:"▾ "; }
+  details.how .body { font-size:.85rem; color:var(--ink-soft); margin-top:.55rem; }
+  details.how code {
+    display:block; background:var(--chip); border-radius:.45rem;
+    padding:.5rem .6rem; margin:.45rem 0; font-size:.82rem;
+    font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;
+    color:var(--ink); overflow-x:auto; white-space:pre-wrap;
+  }
+
+  .note { background:var(--chip); border-radius:.7rem; padding:.7rem .85rem; font-size:.84rem; color:var(--ink-soft); margin-top:.9rem; }
+  .note b { color:var(--ink); }
+
+  .section-title {
+    font-family:var(--font-serif); font-weight:900; font-size:1.35rem; line-height:1.4;
+    margin:2.2rem 0 .4rem;
+  }
+  .section-lede { color:var(--ink-soft); margin:0 0 1rem; font-size:.93rem; }
+
+  .money { border-left:.38rem solid var(--accent); }
+  .money .no { font-size:.74rem; letter-spacing:.12em; color:var(--accent); font-weight:700; }
+  .money h3 { font-family:var(--font-serif); font-weight:900; font-size:1.2rem; margin:.15rem 0 .5rem; }
+  .money ul { margin:.3rem 0 0; padding-left:1.2rem; }
+  .money li { margin:.15rem 0; }
+  .money .fig { color:var(--key); font-weight:800; font-variant-numeric:tabular-nums; }
+
+  a.next {
+    display:block; text-decoration:none; color:inherit; margin-top:.9rem;
+    background:var(--chip); border-radius:.7rem; padding:.75rem .9rem; font-size:.88rem;
+  }
+  a.next b { color:var(--accent); }
+
+  .motto { text-align:center; padding:1.4rem 1.1rem; }
+  .motto p { margin:0; font-family:var(--font-serif); font-weight:900; line-height:1.6; font-size:1.1rem; }
+  .motto p.em { color:var(--key); font-size:1.3rem; margin-top:.8rem; }
+
+  .cta { background:var(--accent); color:var(--on-accent); border-radius:1.1rem; padding:1.3rem 1.15rem; text-align:center; margin-top:1.4rem; }
+  .cta p.big { font-family:var(--font-serif); font-weight:900; font-size:1.25rem; margin:0 0 .5rem; line-height:1.4; }
+  .cta p.sub { margin:0; font-size:.9rem; opacity:.92; }
+
+  footer { margin-top:2.2rem; font-size:.82rem; color:var(--ink-soft); }
+  footer .disclaim { border-top:1px solid var(--line); padding-top:.9rem; }
+  footer .handle { color:var(--accent); font-weight:700; }
+</style>
+
+<div class="watermark" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <a class="back" href="../">← 回到懶人包首頁</a>
+
+  <header>
+    <h1>房貸年期試算<span>少繳的那筆錢，才是重點</span></h1>
+  </header>
+  <p class="lede">
+    同樣跟銀行貸一筆錢，20 年和 40 年，每個月差很多。
+    但總共要多付的利息，也差很多。
+    真正決定結果的，是你把每個月省下來的那筆錢拿去做什麼。
+  </p>
+
+  <div class="card">
+    <h2>① 你的貸款條件</h2>
+    <div class="field">
+      <label for="loan">貸款金額
+        <span class="hint">不是房屋總價，是你實際跟銀行借的錢</span>
+      </label>
+      <div class="row"><input type="number" id="loan" value="1000" min="10" step="50"><span class="unit">萬元</span></div>
+    </div>
+    <div class="field">
+      <label for="rate">房貸利率　<span class="rate-now" id="rateNow">2.50%</span>
+        <span class="hint">拉動看看，利率會同時改變月付和總利息</span>
+      </label>
+      <input type="range" id="rate" min="1.5" max="4" step="0.125" value="2.5">
+    </div>
+  </div>
+
+  <button class="go" id="calc">比較不同年期</button>
+
+  <div id="out">
+
+    <div class="card" style="margin-top:1.15rem">
+      <h2>20 年 vs 40 年</h2>
+      <div class="flow">
+        <div class="step"><span class="k">貸 20 年，每月</span><span class="v" id="p20">—</span></div>
+        <div class="step"><span class="k">貸 40 年，每月</span><span class="v" id="p40">—</span></div>
+        <div class="arrow">↓</div>
+        <div class="step hi"><span class="k">每個月少繳</span><span class="v" id="pDiff">—</span></div>
+        <div class="arrow">↓</div>
+        <div class="step"><span class="k">但總利息多付</span><span class="v" id="iDiff">—</span></div>
+      </div>
+      <div class="note" id="mainNote"></div>
+    </div>
+
+    <div class="card">
+      <h2>各年期完整比較</h2>
+      <table class="bd">
+        <thead><tr><th>年期</th><th>每月月付</th><th>總利息</th><th>比 20 年多付</th></tr></thead>
+        <tbody id="termTable"></tbody>
+      </table>
+      <div class="note" id="termNote"></div>
+      <details class="how">
+        <summary>這些數字怎麼算</summary>
+        <div class="body">
+          房貸是本息平均攤還，每個月繳固定金額，裡面一部分還利息、一部分還本金。
+          <code>每月月付 ＝ 本金 × i ÷ (1 − (1＋i)^−N)
+　i ＝ 年利率 ÷ 12　　N ＝ 年期 × 12
+總利息 ＝ 每月月付 × N − 本金</code>
+          年期拉長，分母的期數變多，每個月當然變少；
+          但利息是按「還沒還完的本金」逐月計算的，<b>欠得越久，利息就付得越多</b>。
+          <br>⚠️ 實際以銀行核貸的利率、年期、寬限期與計息方式為準。
+          本頁未計入寬限期、開辦費、帳管費與其他費用。
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>省下來的那筆錢，順序這樣排</h2>
+      <p class="section-lede" style="margin-bottom:1rem">
+        拉長年期本身沒有錯。錯的是<b>省下來的錢沒有去處</b>。
+        下面是我會建議的順序。
+      </p>
+
+      <div class="card money" style="box-shadow:none;margin-bottom:.8rem">
+        <span class="no">第一筆</span>
+        <h3>家庭緊急預備金</h3>
+        <p>買房之後最可怕的，從來不是房貸本身——是你突然需要一筆錢，手上卻沒有現金。</p>
+        <p id="reserveLine"></p>
+      </div>
+
+      <div class="card money" style="box-shadow:none;margin-bottom:.8rem">
+        <span class="no">第二筆</span>
+        <h3>依家庭需求配置</h3>
+        <ul>
+          <li>小孩的教育金</li>
+          <li>自己的退休金</li>
+          <li>長期的資產配置</li>
+        </ul>
+        <p style="margin-top:.5rem">預備金補滿之後才輪到這一層。順序反過來，遇到事情一樣會被打回原點。</p>
+      </div>
+
+      <div class="card money" style="box-shadow:none;margin-bottom:0">
+        <span class="no">第三筆</span>
+        <h3>再評估要不要提前還本</h3>
+        <p>如果之後收入增加，可以回頭看要不要提前償還本金。<b>這要看你的貸款條件</b>——</p>
+        <ul>
+          <li>綁約期內提前清償，有些方案會有違約金</li>
+          <li>部分還本之後，是「月付變少」還是「年期縮短」，兩種結果差很多</li>
+          <li>先問清楚再決定，不要先還了才發現條件不合</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>如果那筆錢沒有去處</h2>
+      <p id="warnLine"></p>
+      <p>那你只是把還債的時間拉長，然後多付了那筆利息。
+      月付金變少的那一刻很有感，多付的利息是二十年後才結算的——
+      這就是為什麼很多人選了比較長的年期，卻沒有比較輕鬆。</p>
+    </div>
+
+    <a class="next" href="../home-budget/">
+      還沒決定要買多少錢的房子？<br><b>先算：月付多少，可以買多少錢的房子 →</b>
+    </a>
+    <a class="next" href="../after-mortgage/">
+      想知道繳完房貸之後每個月還剩多少？<br><b>接著算：買房之後剩多少 →</b>
+    </a>
+
+    <div class="card motto">
+      <p>很多人在辦房貸的時候<br>只比較「哪個年期繳得少」<br>卻常常忘了問</p>
+      <p class="em">省下來的這一筆錢，<br>我到底要拿去做什麼？</p>
+    </div>
+
+    <div class="cta">
+      <p class="big">年期算得出來，<br>規劃算不出來。</p>
+      <p class="sub">
+        如果你已經在看房、或是正在比較不同年期的方案，<br>
+        但不確定省下來的那筆錢該怎麼安排——<br>
+        私訊跟我說，我陪你把數字排一次。
+      </p>
+    </div>
+
+  </div>
+
+  <footer>
+    <p class="disclaim">
+      本頁為一般性的房貸數學試算，<b>不代表銀行核貸結果，也不構成任何貸款方案的推介</b>。
+      實際利率、年期、寬限期、提前清償條件與違約金，以各銀行契約與審核為準。
+    </p>
+    <p>本頁所有計算都在你的裝置上完成，<b>不會上傳、不會儲存任何資料</b>。</p>
+    <p><span class="handle">@ivy_073</span>　2026／09</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var wm = document.querySelector('.watermark');
+  function fillWM() {
+    if (!wm) return;
+    var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+    n = Math.min(Math.max(n, 24), 160);
+    if (wm.childElementCount === n) return;
+    wm.textContent = '';
+    for (var i = 0; i < n; i++) {
+      var s = document.createElement('span');
+      s.textContent = '@ivy_073';
+      wm.appendChild(s);
+    }
+  }
+  fillWM();
+  window.addEventListener('resize', fillWM);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var num = function (id) { var v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+
+  function wan(v) { return Math.round(v / 10000).toLocaleString('zh-TW') + ' 萬'; }
+  function money(v) { return Math.round(v).toLocaleString('zh-TW'); }
+
+  // 每借 1 元、每月要繳多少（本息平均攤還）
+  function perDollar(ratePct, years) {
+    var i = ratePct / 100 / 12, N = years * 12;
+    if (N <= 0) return Infinity;
+    return i === 0 ? 1 / N : i / (1 - Math.pow(1 + i, -N));
+  }
+  function payFor(principal, ratePct, years) { return principal * perDollar(ratePct, years); }
+  function interestFor(principal, ratePct, years) {
+    return payFor(principal, ratePct, years) * years * 12 - principal;
+  }
+
+  var rateEl = $('rate'), rateNow = $('rateNow');
+  function showRate() { rateNow.textContent = parseFloat(rateEl.value).toFixed(2) + '%'; }
+  rateEl.addEventListener('input', function () {
+    showRate();
+    if ($('out').classList.contains('on')) calc();
+  });
+  showRate();
+
+  function calc() {
+    var P = num('loan') * 10000;
+    var r = parseFloat(rateEl.value);
+    if (P <= 0) return;
+
+    var pay20 = payFor(P, r, 20), pay40 = payFor(P, r, 40);
+    var int20 = interestFor(P, r, 20), int40 = interestFor(P, r, 40);
+    var dPay = pay20 - pay40, dInt = int40 - int20;
+
+    $('p20').textContent = money(pay20) + ' 元';
+    $('p40').textContent = money(pay40) + ' 元';
+    $('pDiff').textContent = money(dPay) + ' 元';
+    $('iDiff').textContent = wan(dInt);
+
+    $('mainNote').innerHTML =
+      '貸 <b>' + wan(P) + '</b>、利率 <b>' + r.toFixed(2) + '%</b>：' +
+      '把年期從 20 年拉到 40 年，每個月輕鬆 <b>' + money(dPay) + ' 元</b>，' +
+      '但整筆算下來，總利息多付 <b>' + wan(dInt) + '</b>。';
+
+    var terms = [20, 25, 30, 35, 40];
+    var rows = '';
+    terms.forEach(function (y) {
+      var p = payFor(P, r, y), it = interestFor(P, r, y);
+      rows += '<tr' + (y === 40 ? ' class="hi"' : '') + '><td>' + y + ' 年</td><td>' +
+              money(p) + ' 元</td><td>' + wan(it) + '</td><td>' +
+              (y === 20 ? '—' : '＋' + wan(it - int20)) + '</td></tr>';
+    });
+    $('termTable').innerHTML = rows;
+    $('termNote').innerHTML =
+      '每多貸 5 年，月付大約少 <b>' +
+      money(payFor(P, r, 20) - payFor(P, r, 25)) +
+      ' 元</b>，但總利息會再往上加一段——而且越往後，省下的月付越少、多付的利息越多。';
+
+    // 緊急預備金：用「省下來的月付」補滿 6 個月家庭支出要多久（以 pay40 當家庭最大固定支出粗估）
+    var target = pay40 * 6;
+    var months = dPay > 0 ? Math.ceil(target / dPay) : 0;
+    $('reserveLine').innerHTML =
+      '你每個月省下的 <span class="fig">' + money(dPay) + ' 元</span>，' +
+      '大約 <span class="fig">' + months + ' 個月</span>（' +
+      (months / 12).toFixed(1) + ' 年）就能存到 <span class="fig">' + wan(target) +
+      '</span>——也就是六個月的房貸。先把這一格補滿，再談別的。';
+
+    $('warnLine').innerHTML =
+      '如果那 <b>' + money(dPay) + ' 元</b> 只是讓生活水準跟著往上，' +
+      '二十年後你會發現，你多付了 <b>' + wan(dInt) + '</b> 的利息，' +
+      '但手上並沒有多出任何東西。';
+
+    $('out').classList.add('on');
+  }
+
+  $('calc').addEventListener('click', function () {
+    calc();
+    $('out').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+})();
+</script>

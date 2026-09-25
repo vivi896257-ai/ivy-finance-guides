@@ -1,0 +1,450 @@
+<title>買房之後剩多少</title>
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票，與各懶人包內頁同一套 ── */
+  :root {
+    --ground:#F3F1E4; --surface:#FCFDF5; --chip:#E9E6DB; --line:#DEDACD;
+    --ink:#1A1A16; --ink-soft:#6C6860; --accent:#B86048; --key:#C9603F;
+    --good:#4EA86C; --warn:#C65842; --on-accent:#FFF0E1;
+    --shadow: 0 2px 10px rgba(26,26,22,.07), 0 8px 28px rgba(26,26,22,.05);
+    --wm-color:#1A1A16; --wm-alpha:.075;
+    --font-sans: "Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    --font-serif: "Noto Serif TC","Songti TC","PingFang TC",serif;
+    --step: clamp(.9rem,.86rem + .2vw,1rem);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+      --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+      --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+      --wm-color:#F1EEE2; --wm-alpha:.06;
+      --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+    --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+    --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+    --wm-color:#F1EEE2; --wm-alpha:.06;
+    --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--font-sans); font-size:var(--step);
+    line-height:1.7; -webkit-text-size-adjust:100%;
+  }
+  .watermark {
+    position:fixed; inset:-25%; z-index:0; pointer-events:none; user-select:none;
+    display:flex; flex-wrap:wrap; align-content:center; justify-content:center;
+    gap:3.4rem 3.2rem; transform:rotate(-24deg);
+    font-family:var(--font-serif); font-weight:900; font-size:1.05rem;
+    letter-spacing:.1em; color:var(--wm-color); opacity:var(--wm-alpha); white-space:nowrap;
+  }
+  .wrap { position:relative; z-index:1; max-width:34rem; margin:0 auto; padding:2.2rem 1.15rem 3.5rem; }
+
+  a.back { display:inline-block; color:var(--ink-soft); text-decoration:none; font-size:.85rem; margin-bottom:1.2rem; }
+  a.back:hover { color:var(--accent); }
+
+  header h1 {
+    font-family:var(--font-serif); font-weight:900; line-height:1.25;
+    font-size:clamp(1.7rem,1.3rem + 2vw,2.3rem); margin:0 0 .5rem;
+  }
+  header h1 span { display:block; font-size:.5em; color:var(--accent); letter-spacing:.04em; margin-top:.5rem; }
+  .lede { color:var(--ink-soft); margin:0 0 1.6rem; font-size:.95rem; }
+
+  .card {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:1.1rem; box-shadow:var(--shadow);
+    padding:1.15rem 1.15rem 1.3rem; margin-bottom:1.15rem;
+  }
+  .card > h2 {
+    font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 .9rem; font-weight:700;
+  }
+  .card p { margin:0 0 .6rem; }
+  .card p:last-child { margin-bottom:0; }
+  .card .intro { font-size:.86rem; color:var(--ink-soft); margin:-.3rem 0 .9rem; }
+
+  .field { margin-bottom:.9rem; }
+  .field:last-child { margin-bottom:0; }
+  .field label { display:block; font-size:.9rem; font-weight:600; margin-bottom:.2rem; }
+  .field .hint { display:block; font-size:.78rem; color:var(--ink-soft); font-weight:400; margin-top:.1rem; line-height:1.5; }
+  .field .row { display:flex; align-items:center; gap:.5rem; margin-top:.35rem; }
+  .field input[type=number] {
+    flex:1 1 auto; width:100%; min-width:0; font:inherit; font-variant-numeric:tabular-nums;
+    padding:.55rem .7rem; border:1px solid var(--line); border-radius:.6rem;
+    background:var(--ground); color:var(--ink);
+  }
+  .field input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .unit { flex:0 0 auto; color:var(--ink-soft); font-size:.85rem; min-width:3.2em; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.2rem .8rem; }
+  @media (max-width: 360px) { .grid2 { grid-template-columns:1fr; } }
+
+  button.go {
+    width:100%; font:inherit; font-weight:700; font-size:1.02rem;
+    padding:.85rem 1rem; border:0; border-radius:.8rem;
+    background:var(--accent); color:var(--on-accent); cursor:pointer;
+  }
+  button.go:active { transform:translateY(1px); }
+
+  #out { display:none; }
+  #out.on { display:block; }
+
+  table.bd { width:100%; border-collapse:collapse; font-size:.92rem; font-variant-numeric:tabular-nums; }
+  table.bd td { padding:.5rem 0; border-bottom:1px dashed var(--line); }
+  table.bd td:last-child { text-align:right; white-space:nowrap; font-weight:600; }
+  table.bd tr.minus td:last-child { color:var(--ink-soft); font-weight:500; }
+  table.bd tr.sub td { border-bottom:1px solid var(--line); font-weight:800; }
+  table.bd tr.sub td:last-child { font-family:var(--font-serif); font-weight:900; font-size:1.15rem; color:var(--ink); }
+  table.bd tr.final td { border-bottom:0; font-weight:800; padding-top:.7rem; }
+  table.bd tr.final td:last-child { font-family:var(--font-serif); font-weight:900; font-size:clamp(1.6rem,1.25rem + 2vw,2.2rem); color:var(--key); }
+  table.bd tr.final.neg td:last-child { color:var(--warn); }
+
+  .big-num {
+    font-family:var(--font-serif); font-weight:900;
+    font-size:clamp(2rem,1.4rem + 3vw,2.9rem);
+    line-height:1.12; color:var(--key); margin:.2rem 0 .1rem;
+    font-variant-numeric:tabular-nums;
+  }
+  .big-num.neg { color:var(--warn); }
+  .big-cap { font-size:.8rem; letter-spacing:.1em; color:var(--ink-soft); margin:0; }
+
+  details.how { margin-top:.9rem; border-top:1px solid var(--line); padding-top:.7rem; }
+  details.how summary { cursor:pointer; font-size:.82rem; color:var(--accent); font-weight:600; list-style:none; }
+  details.how summary::-webkit-details-marker { display:none; }
+  details.how summary::before { content:"▸ "; }
+  details.how[open] summary::before { content:"▾ "; }
+  details.how .body { font-size:.85rem; color:var(--ink-soft); margin-top:.55rem; }
+  details.how code {
+    display:block; background:var(--chip); border-radius:.45rem;
+    padding:.5rem .6rem; margin:.45rem 0; font-size:.82rem;
+    font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;
+    color:var(--ink); overflow-x:auto; white-space:pre-wrap;
+  }
+
+  .note { background:var(--chip); border-radius:.7rem; padding:.7rem .85rem; font-size:.84rem; color:var(--ink-soft); margin-top:.9rem; }
+  .note b { color:var(--ink); }
+
+  .section-title {
+    font-family:var(--font-serif); font-weight:900; font-size:1.35rem; line-height:1.4;
+    margin:2.2rem 0 .4rem;
+  }
+  .section-lede { color:var(--ink-soft); margin:0 0 1rem; font-size:.93rem; }
+
+  .quote { border-left:.38rem solid var(--accent); }
+  .quote .line { font-family:var(--font-serif); font-weight:900; font-size:1.3rem; line-height:1.5; margin:.2rem 0 .7rem; color:var(--key); }
+
+  a.next {
+    display:block; text-decoration:none; color:inherit; margin-top:.9rem;
+    background:var(--chip); border-radius:.7rem; padding:.75rem .9rem; font-size:.88rem;
+  }
+  a.next b { color:var(--accent); }
+
+  .motto { text-align:center; padding:1.4rem 1.1rem; }
+  .motto p { margin:0; font-family:var(--font-serif); font-weight:900; line-height:1.6; font-size:1.1rem; }
+  .motto p.em { color:var(--key); font-size:1.25rem; margin-top:.8rem; }
+
+  .cta { background:var(--accent); color:var(--on-accent); border-radius:1.1rem; padding:1.3rem 1.15rem; text-align:center; margin-top:1.4rem; }
+  .cta p.big { font-family:var(--font-serif); font-weight:900; font-size:1.25rem; margin:0 0 .5rem; line-height:1.4; }
+  .cta p.sub { margin:0; font-size:.9rem; opacity:.92; }
+
+  footer { margin-top:2.2rem; font-size:.82rem; color:var(--ink-soft); }
+  footer .disclaim { border-top:1px solid var(--line); padding-top:.9rem; }
+  footer .handle { color:var(--accent); font-weight:700; }
+</style>
+
+<div class="watermark" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <a class="back" href="../">← 回到懶人包首頁</a>
+
+  <header>
+    <h1>買房之後剩多少<span>繳完房貸，你的家庭每個月還剩多少</span></h1>
+  </header>
+  <p class="lede">
+    頭期款是一次性的。房貸是接下來二三十年，每一個月都要繳。
+    把你家的數字填進去，直接算一次。
+  </p>
+
+  <div class="card">
+    <h2>① 收入與房貸</h2>
+    <div class="field">
+      <label for="income">家庭月收入
+        <span class="hint">雙薪就把兩個人加起來</span>
+      </label>
+      <div class="row"><input type="number" id="income" value="100000" min="0" step="5000"><span class="unit">元／月</span></div>
+    </div>
+    <div class="field">
+      <label for="mort">房貸月付
+        <span class="hint">還沒買的話，先填你打算繳的金額</span>
+      </label>
+      <div class="row"><input type="number" id="mort" value="30000" min="0" step="1000"><span class="unit">元／月</span></div>
+    </div>
+    <div class="field">
+      <label for="edu">小孩教育費＋安親費</label>
+      <div class="row"><input type="number" id="edu" value="10000" min="0" step="1000"><span class="unit">元／月</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>② 買房之後才多出來的固定支出</h2>
+    <p class="intro">這些都不是房貸，但一樣會從你的帳戶出去。</p>
+    <div class="field">
+      <label for="mgmt">管理費</label>
+      <div class="row"><input type="number" id="mgmt" value="0" min="0" step="500"><span class="unit">元／月</span></div>
+    </div>
+    <div class="field">
+      <label for="tax">房屋稅＋地價稅
+        <span class="hint">一年繳一次的，填一整年的金額，下面會自動除以 12</span>
+      </label>
+      <div class="row"><input type="number" id="tax" value="0" min="0" step="1000"><span class="unit">元／年</span></div>
+    </div>
+    <div class="field">
+      <label for="fix">修繕預留
+        <span class="hint">每個月先放一筆，房子要修的時候才不用臨時湊</span>
+      </label>
+      <div class="row"><input type="number" id="fix" value="0" min="0" step="500"><span class="unit">元／月</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>③ 一家人的生活</h2>
+    <p class="intro">這些，都還只是你平常看得到的支出。</p>
+    <div class="grid2">
+      <div class="field"><label for="food">伙食</label>
+        <div class="row"><input type="number" id="food" value="0" min="0" step="1000"><span class="unit">元</span></div></div>
+      <div class="field"><label for="util">水電</label>
+        <div class="row"><input type="number" id="util" value="0" min="0" step="500"><span class="unit">元</span></div></div>
+      <div class="field"><label for="trans">交通</label>
+        <div class="row"><input type="number" id="trans" value="0" min="0" step="500"><span class="unit">元</span></div></div>
+      <div class="field"><label for="ins">保險</label>
+        <div class="row"><input type="number" id="ins" value="0" min="0" step="500"><span class="unit">元</span></div></div>
+      <div class="field"><label for="parent">孝親</label>
+        <div class="row"><input type="number" id="parent" value="0" min="0" step="1000"><span class="unit">元</span></div></div>
+      <div class="field"><label for="self">你自己的生活</label>
+        <div class="row"><input type="number" id="self" value="0" min="0" step="1000"><span class="unit">元</span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>④ 還要準備的三筆錢</h2>
+    <p class="intro">每個月繳完房貸、家庭支出付完，你還有沒有錢準備這三筆？</p>
+    <div class="field">
+      <label for="emerg">緊急預備金</label>
+      <div class="row"><input type="number" id="emerg" value="0" min="0" step="1000"><span class="unit">元／月</span></div>
+    </div>
+    <div class="field">
+      <label for="retire">退休</label>
+      <div class="row"><input type="number" id="retire" value="0" min="0" step="1000"><span class="unit">元／月</span></div>
+    </div>
+    <div class="field">
+      <label for="kidfund">小孩未來的教育金</label>
+      <div class="row"><input type="number" id="kidfund" value="0" min="0" step="1000"><span class="unit">元／月</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⑤ 買完房之後，手上的現金（選填）</h2>
+    <div class="field">
+      <label for="cash">付完頭期款以後，還能隨時動用的錢
+        <span class="hint">存款、活存這類隨時拿得出來的</span>
+      </label>
+      <div class="row"><input type="number" id="cash" value="0" min="0" step="10000"><span class="unit">元</span></div>
+    </div>
+  </div>
+
+  <button class="go" id="calc">算出我每個月剩多少</button>
+
+  <div id="out">
+
+    <div class="card" style="margin-top:1.15rem">
+      <h2>一個月到底還剩多少</h2>
+      <table class="bd">
+        <tr><td>家庭月收入</td><td id="rIncome">—</td></tr>
+        <tr class="minus"><td>－ 房貸</td><td id="rMort">—</td></tr>
+        <tr class="minus"><td>－ 教育費＋安親費</td><td id="rEdu">—</td></tr>
+        <tr class="sub"><td>剩下</td><td id="rStep1">—</td></tr>
+        <tr class="minus"><td>－ 買房之後的固定支出</td><td id="rHouse">—</td></tr>
+        <tr class="minus"><td>－ 一家人的生活</td><td id="rLife">—</td></tr>
+        <tr class="sub"><td>剩下</td><td id="rStep2">—</td></tr>
+        <tr class="minus"><td>－ 緊急預備金、退休、教育金</td><td id="rSave">—</td></tr>
+        <tr class="final" id="rFinalRow"><td>最後剩下</td><td id="rFinal">—</td></tr>
+      </table>
+      <div class="note" id="leftNote"></div>
+    </div>
+
+    <div class="card" id="cashCard">
+      <h2>突然需要一筆錢，撐得住幾個月</h2>
+      <p class="big-num" id="cMonths">—</p>
+      <p class="big-cap">手上的現金 ÷ 每個月的總支出</p>
+      <div class="note" id="cashNote"></div>
+    </div>
+
+    <div class="card">
+      <h2>反過來算：你家可以負擔多少月付</h2>
+      <p class="intro">先把生活、教育、要存的錢都扣掉，剩下的，才是你真正能拿去繳房貸的上限。</p>
+      <p class="big-num" id="aPay">—</p>
+      <p class="big-cap">每月房貸上限</p>
+      <div class="note" id="affordNote"></div>
+      <details class="how">
+        <summary>這個數字怎麼算</summary>
+        <div class="body">
+          <code>可負擔月付 ＝ 家庭月收入
+　　　　　　 − 教育費＋安親費
+　　　　　　 − 買房之後的固定支出
+　　　　　　 − 一家人的生活
+　　　　　　 − 緊急預備金、退休、教育金</code>
+          換算房屋總價，用的是利率 2.5%、貸款 30 年、貸八成：
+          每借 100 萬，每月本息大約 3,951 元。
+          <a class="next" href="../home-budget/">
+            想換利率、年期、成數再算一次？<br><b>打開：買房預算試算 →</b>
+          </a>
+        </div>
+      </details>
+    </div>
+
+  </div>
+
+  <h2 class="section-title">還有一件很多人沒算</h2>
+
+  <div class="card quote">
+    <p>房子也是你的資產。但你今天突然需要 50 萬——</p>
+    <p class="line">你不可能拆一間廁所拿去賣。</p>
+    <p>
+      所以買房之後，你只是把一部分原本可以動用的資金，放進了房子裡。
+      你的資產結構改變了，手上的流動資金也可能變少。
+    </p>
+    <p><b>這兩件事，一定要分開看。</b></p>
+  </div>
+
+  <div class="card motto">
+    <p>不是房子不能買。<br>而是你在買以前，要先知道：<br>買下去之後，我的生活會變成什麼樣子？</p>
+    <p class="em">「買下去之後，我還剩多少現金流？」<br>「我的資產，是不是幾乎全部都壓在房子裡？」</p>
+  </div>
+
+  <div class="cta">
+    <p class="big">如果算完你發現，<br>繳完房貸真的剩不多——</p>
+    <p class="sub">
+      那就不是算房貸的問題了。<br>
+      是你整個家庭的財務規劃。
+    </p>
+  </div>
+
+  <footer>
+    <p class="disclaim">
+      本頁為一般性的家庭收支數學粗算，<b>不代表銀行核貸結果</b>。
+      實際可貸金額、成數與利率，以銀行審核為準。
+    </p>
+    <p>本頁所有計算都在你的裝置上完成，<b>不會上傳、不會儲存任何資料</b>。</p>
+    <p><span class="handle">@ivy_073</span>　2026／09</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var wm = document.querySelector('.watermark');
+  function fillWM() {
+    if (!wm) return;
+    var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+    n = Math.min(Math.max(n, 24), 160);
+    if (wm.childElementCount === n) return;
+    wm.textContent = '';
+    for (var i = 0; i < n; i++) {
+      var s = document.createElement('span');
+      s.textContent = '@ivy_073';
+      wm.appendChild(s);
+    }
+  }
+  fillWM();
+  window.addEventListener('resize', fillWM);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var num = function (id) { var v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : 0; };
+
+  function money(v) { return Math.round(v).toLocaleString('zh-TW') + ' 元'; }
+  function wan(v) { return Math.round(v / 10000).toLocaleString('zh-TW') + ' 萬'; }
+  function signed(v) { return (v < 0 ? '−' : '') + Math.round(Math.abs(v)).toLocaleString('zh-TW') + ' 元'; }
+
+  // 利率 2.5%、30 年、本息平均攤還：每借 1 元的月付
+  var I = 0.025 / 12, N = 360;
+  var PER = I / (1 - Math.pow(1 + I, -N));
+  var LTV = 0.8;
+
+  function calc() {
+    var income = num('income'), mort = num('mort'), edu = num('edu');
+    var house = num('mgmt') + num('tax') / 12 + num('fix');
+    var life = num('food') + num('util') + num('trans') + num('ins') + num('parent') + num('self');
+    var save = num('emerg') + num('retire') + num('kidfund');
+
+    var step1 = income - mort - edu;
+    var step2 = step1 - house - life;
+    var fin = step2 - save;
+
+    $('rIncome').textContent = money(income);
+    $('rMort').textContent = money(mort);
+    $('rEdu').textContent = money(edu);
+    $('rStep1').textContent = signed(step1);
+    $('rHouse').textContent = money(house);
+    $('rLife').textContent = money(life);
+    $('rStep2').textContent = signed(step2);
+    $('rSave').textContent = money(save);
+    $('rFinal').textContent = signed(fin);
+    $('rFinalRow').classList.toggle('neg', fin < 0);
+
+    var ratio = income > 0 ? Math.round(mort / income * 100) : 0;
+    var msg = '房貸佔家庭月收入 <b>' + ratio + '%</b>。';
+    if (life === 0 && house === 0) {
+      msg += '你還沒填生活支出和買房之後的固定支出，所以這裡看起來還剩很多——<b>把 ② ③ 填進去，才是真正剩下的。</b>';
+    } else if (fin < 0) {
+      msg += '<b>每個月不夠 ' + money(-fin) + '。</b>要嘛是房貸抓太高，要嘛是要存的那三筆，得有一筆先放掉。';
+    } else if (fin === 0 && save > 0) {
+      msg += '該付的、該存的都算進去之後，<b>剛好打平，沒有任何餘裕。</b>';
+    } else if (save === 0) {
+      msg += '你在 ④ 還沒填要存的錢。緊急預備金、退休、教育金，<b>也要從這 ' + money(step2) + ' 裡面出。</b>';
+    } else {
+      msg += '該付的、該存的都算進去之後，<b>每個月還有 ' + money(fin) + ' 的餘裕。</b>';
+    }
+    $('leftNote').innerHTML = msg;
+
+    // 現金撐幾個月
+    var cash = num('cash');
+    var outflow = mort + edu + house + life;
+    if (cash > 0 && outflow > 0) {
+      var m = cash / outflow;
+      $('cMonths').textContent = (m < 10 ? m.toFixed(1) : Math.round(m)) + ' 個月';
+      $('cMonths').classList.toggle('neg', m < 3);
+      $('cashNote').innerHTML = '每個月總支出 ' + money(outflow) + '（房貸＋教育＋固定支出＋生活）。' +
+        '收入一斷，這筆現金大約能撐 <b>' + (m < 10 ? m.toFixed(1) : Math.round(m)) + ' 個月</b>。' +
+        (cash < 500000 ? '<br>突然需要 50 萬的時候，手上的現金不夠——這時候房子幫不上忙。' : '');
+      $('cashCard').style.display = '';
+    } else {
+      $('cashCard').style.display = 'none';
+    }
+
+    // 反推可負擔月付
+    var afford = income - edu - house - life - save;
+    if (afford > 0) {
+      var loan = afford / PER;
+      $('aPay').textContent = money(afford);
+      $('aPay').classList.remove('neg');
+      $('affordNote').innerHTML = '換算成房貸大約 <b>' + wan(loan) + '</b>，貸八成的房屋總價大約 <b>' +
+        wan(loan / LTV) + '</b>，頭期款要準備 <b>' + wan(loan / LTV - loan) + '</b>。' +
+        (mort > afford ? '<br>你現在填的房貸月付 ' + money(mort) + '，<b>比上限多了 ' + money(mort - afford) + '。</b>' : '');
+    } else {
+      $('aPay').textContent = '0 元';
+      $('aPay').classList.add('neg');
+      $('affordNote').innerHTML = '扣完生活、教育、要存的錢之後，<b>已經沒有空間繳房貸了。</b>';
+    }
+
+    $('out').classList.add('on');
+  }
+
+  $('calc').addEventListener('click', function () {
+    calc();
+    $('out').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+})();
+</script>
