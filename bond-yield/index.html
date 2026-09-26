@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>公債殖利率與你的股票</title>
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票，與各懶人包內頁同一套 ── */
+  :root {
+    --ground:#F3F1E4; --surface:#FCFDF5; --chip:#E9E6DB; --line:#DEDACD;
+    --ink:#1A1A16; --ink-soft:#6C6860; --accent:#B86048; --key:#C9603F;
+    --good:#4EA86C; --warn:#C65842; --on-accent:#FFF0E1;
+    --shadow: 0 2px 10px rgba(26,26,22,.07), 0 8px 28px rgba(26,26,22,.05);
+    --wm-color:#1A1A16; --wm-alpha:.075;
+    --font-sans: "Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    --font-serif: "Noto Serif TC","Songti TC","PingFang TC",serif;
+    --step: clamp(.9rem,.86rem + .2vw,1rem);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+      --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+      --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+      --wm-color:#F1EEE2; --wm-alpha:.06;
+      --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+    --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+    --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+    --wm-color:#F1EEE2; --wm-alpha:.06;
+    --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing:border-box; }
+
+  /* ── 浮水印：固定在視窗上層，捲到哪截圖到哪都帶得到 ── */
+  .watermark {
+    position:fixed; inset:-25%; z-index:5; pointer-events:none; user-select:none;
+    display:flex; flex-wrap:wrap; align-content:center; justify-content:center;
+    gap:3.4rem 3.2rem; transform:rotate(-24deg);
+    font-family:var(--font-serif); font-weight:900; font-size:1.05rem; letter-spacing:.1em;
+    color:var(--wm-color); opacity:var(--wm-alpha); white-space:nowrap;
+  }
+
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--font-sans); font-size:var(--step);
+    line-height:1.7; -webkit-text-size-adjust:100%;
+  }
+  .wrap {
+    max-width:34rem; margin:0 auto; padding:2.5rem 1rem 4rem;
+    display:flex; flex-direction:column; gap:3.25rem;
+  }
+  section { display:flex; flex-direction:column; gap:1rem; }
+  h1, h2, h3 { margin:0; text-wrap:balance; line-height:1.35; }
+  h1 { font-family:var(--font-serif); font-size:clamp(1.9rem,1.4rem + 2.4vw,2.6rem); font-weight:900; letter-spacing:-.01em; }
+  h1 .em { color:var(--key); display:block; }
+  h2 { font-family:var(--font-serif); font-size:clamp(1.3rem,1.1rem + .9vw,1.6rem); font-weight:900; }
+  .kicker { font-size:.72rem; font-weight:700; letter-spacing:.16em; color:var(--ink-soft); margin:0; }
+  .lede { color:var(--ink-soft); margin:0; }
+  header { display:flex; flex-direction:column; gap:.9rem; }
+
+  /* ── 連鎖圖：一步推一步，真的是序列才編號 ── */
+  ol.chain {
+    margin:0; padding:0; list-style:none; counter-reset:step;
+    display:flex; flex-direction:column; gap:.7rem;
+  }
+  ol.chain li {
+    counter-increment:step; position:relative;
+    background:var(--surface); border-radius:.95rem; box-shadow:var(--shadow);
+    padding:.95rem 1.1rem .95rem 3.4rem; font-weight:900;
+  }
+  ol.chain li::before {
+    content:counter(step); position:absolute; left:1.05rem; top:.9rem;
+    width:1.7rem; height:1.7rem; border-radius:50%;
+    background:var(--accent); color:var(--on-accent);
+    font-family:var(--font-serif); font-weight:900; font-size:.95rem;
+    display:grid; place-items:center;
+  }
+  ol.chain li .what { display:block; font-weight:400; font-size:.88rem; color:var(--ink-soft); margin-top:.2rem; }
+  ol.chain li.hot { border-left:.38rem solid var(--key); }
+
+  /* ── ✕／✓ 對照 ── */
+  .marks { display:flex; flex-direction:column; gap:1rem; }
+  .mark {
+    background:var(--surface); border-radius:1.1rem; box-shadow:var(--shadow);
+    padding:1.05rem 1.2rem; border-left:.38rem solid var(--line);
+  }
+  .mark.no  { border-left-color:var(--warn); }
+  .mark.yes { border-left-color:var(--good); }
+  .mark h3 { font-size:1rem; font-weight:900; display:flex; align-items:center; gap:.5rem; }
+  .mark h3::before { font-family:var(--font-serif); font-size:1.15rem; font-weight:900; }
+  .mark.no h3::before  { content:"✕"; color:var(--warn); }
+  .mark.yes h3::before { content:"✓"; color:var(--good); }
+  .mark ul { margin:.7rem 0 0; padding-left:1.5rem; display:flex; flex-direction:column; gap:.35rem; }
+
+  .card {
+    background:var(--surface); border-radius:1.1rem; box-shadow:var(--shadow);
+    padding:1.05rem 1.2rem;
+  }
+  .card ul { margin:0; padding-left:1.3rem; display:flex; flex-direction:column; gap:.45rem; }
+
+  .pull {
+    font-family:var(--font-serif); font-size:1.15rem; font-weight:900; color:var(--key);
+    line-height:1.55; margin:0; text-wrap:balance;
+  }
+  .pull .quiet { display:block; color:var(--ink-soft); font-size:.95rem; font-weight:700; }
+
+  .note {
+    font-size:.78rem; color:var(--ink-soft); background:var(--chip);
+    border-radius:.7rem; padding:.6rem .85rem; margin:0;
+  }
+
+  /* ── 試算 ── */
+  .calc { display:flex; flex-direction:column; gap:.85rem; }
+  .calc label { display:flex; flex-direction:column; gap:.3rem; font-weight:700; font-size:.92rem; }
+  .calc .in { display:flex; align-items:center; gap:.5rem; }
+  .calc input {
+    flex:1; min-width:0; font:inherit; font-size:1.1rem; font-weight:700;
+    padding:.55rem .7rem; border:1px solid var(--line); border-radius:.6rem;
+    background:var(--ground); color:var(--ink); font-variant-numeric:tabular-nums;
+  }
+  .calc .unit { color:var(--ink-soft); font-weight:700; }
+  .result { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
+  .fig {
+    background:var(--chip); border-radius:.85rem; padding:.8rem .9rem;
+    display:flex; flex-direction:column; gap:.15rem;
+  }
+  .fig .k { font-size:.78rem; color:var(--ink-soft); font-weight:700; }
+  .fig .v {
+    font-family:var(--font-serif); font-weight:900; font-size:1.6rem; line-height:1.15;
+    color:var(--key); font-variant-numeric:tabular-nums;
+  }
+  .fig .v small { font-size:.85rem; color:var(--ink-soft); margin-left:.15rem; }
+  .err { color:var(--warn); font-size:.85rem; font-weight:700; margin:0; min-height:1.2em; }
+
+  ul.checks { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:.55rem; }
+  ul.checks label { display:flex; gap:.65rem; align-items:flex-start; font-weight:700; cursor:pointer; }
+  ul.checks input { width:1.15rem; height:1.15rem; margin-top:.3rem; accent-color:var(--accent); flex:none; }
+
+  .cta {
+    background:var(--accent); color:var(--on-accent);
+    border-radius:1.1rem; padding:1.5rem 1.25rem; box-shadow:var(--shadow); text-align:center;
+  }
+  .cta .big { font-family:var(--font-serif); font-weight:900; font-size:clamp(1.5rem,1.2rem + 1.4vw,1.9rem); line-height:1.35; margin:0 0 .7rem; }
+  .cta .sub { margin:0; font-size:.95rem; line-height:1.8; }
+
+  footer {
+    border-top:1px solid var(--line); padding-top:1.5rem;
+    display:flex; flex-direction:column; gap:.9rem; font-size:.82rem; color:var(--ink-soft);
+  }
+  footer p { margin:0; }
+  footer .disclaim { color:var(--warn); font-weight:700; }
+  .handle { font-family:var(--font-serif); font-weight:900; color:var(--accent); letter-spacing:.04em; }
+</style>
+</head>
+<body>
+
+<div class="watermark" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <header>
+    <p class="kicker">公債殖利率 × 你的股票</p>
+    <h1>殖利率往上的時候，<span class="em">真正在動的是大錢</span></h1>
+    <p class="lede">你可能會覺得，美國公債殖利率跟我買的股票有什麼關係？這頁講兩件事：這中間是怎麼連起來的，還有你的錢是不是全都押在同一個地方。</p>
+  </header>
+
+  <section>
+    <h2>① 這中間是怎麼連起來的</h2>
+    <ol class="chain">
+      <li>美國公債殖利率往上</li>
+      <li>相對低風險的地方，給的報酬變高了</li>
+      <li>手上有獲利的投資人開始重新想一件事
+        <span class="what">「我現在有必要承擔這麼大的股票市場風險嗎？」</span>
+      </li>
+      <li>先把部分資金獲利了結
+        <span class="what">移到相對低風險的部位裡面</span>
+      </li>
+      <li class="hot">先動的是漲比較多的那一個
+        <span class="what">這幾年最明顯的，就是科技類股</span>
+      </li>
+    </ol>
+    <p class="note">殖利率往上，股票不一定會跌。這是市場常見的資金移動方式，不是預測。</p>
+    <p class="pull">
+      <span class="quiet">真正在動的不是美債——</span>
+      是市場上的大錢，又有新的地方可以去了。
+    </p>
+  </section>
+
+  <section>
+    <h2>② 這不是在看空</h2>
+    <div class="marks">
+      <div class="mark no">
+        <h3>很多人以為</h3>
+        <ul>
+          <li>有人在賣，就是他們看空股市</li>
+          <li>要趕快跟著賣</li>
+        </ul>
+      </div>
+      <div class="mark yes">
+        <h3>其實是</h3>
+        <ul>
+          <li>他們不一定看空股票市場</li>
+          <li>這不是放空，而是做資產的重新分配</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>③ 那跟 0050 有什麼關係</h2>
+    <div class="card">
+      <ul>
+        <li>0050 是追蹤市值的工具：市場長什麼樣子，它就反映什麼樣子</li>
+        <li>0050 權重比較高的那幾家，剛好集中在科技產業</li>
+        <li><b>這不是在說 0050 不好</b></li>
+      </ul>
+    </div>
+    <p class="pull">
+      <span class="quiet">這件事要提醒你的，不是趕快賣掉手上的股票——</span>
+      而是你的錢，是不是都單押在同一個市場裡面。
+    </p>
+  </section>
+
+  <section>
+    <h2>④ 算出你自己的數字</h2>
+    <div class="card calc">
+      <label>你全部的錢（股票＋存款＋其他）
+        <span class="in"><input id="total" type="number" inputmode="decimal" min="0" step="any" placeholder="例如 300"><span class="unit">萬</span></span>
+      </label>
+      <label>其中放在股票的
+        <span class="in"><input id="stock" type="number" inputmode="decimal" min="0" step="any" placeholder="例如 240"><span class="unit">萬</span></span>
+      </label>
+      <p class="err" id="err" role="status"></p>
+      <div class="result">
+        <div class="fig"><span class="k">你的錢在股票的</span><span class="v" id="share">—</span></div>
+        <div class="fig"><span class="k">如果明年股市跌 20%，這一格會少</span><span class="v" id="drop">—</span></div>
+      </div>
+    </div>
+    <p class="note">「跌 20%」只是用來感受量級的假設，不是預測。本頁所有計算都在你的裝置上完成，不會上傳、不會儲存。</p>
+
+    <div class="card">
+      <ul class="checks">
+        <li><label><input type="checkbox">這些股票，是不是大多在同一個市場？</label></li>
+        <li><label><input type="checkbox">裡面是不是有很多是這幾年漲最多的科技類？</label></li>
+        <li><label><input type="checkbox">這筆錢，你什麼時候會要用？</label></li>
+      </ul>
+    </div>
+
+    <p class="pull">
+      <span class="quiet">如果你所有的部位都在股票，</span>
+      你等於假設這些錢永遠都不會搬家。
+    </p>
+  </section>
+
+  <section>
+    <h2>⑤ 先講清楚這頁的界線</h2>
+    <div class="marks">
+      <div class="mark no">
+        <h3>這不解決什麼</h3>
+        <ul>
+          <li>不會告訴你該賣什麼、買什麼</li>
+          <li>不會給你該配幾成的比例</li>
+        </ul>
+      </div>
+      <div class="mark yes">
+        <h3>這解決什麼</h3>
+        <ul>
+          <li>看懂殖利率跟股票怎麼連在一起</li>
+          <li>知道你的錢現在集中在哪裡</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta">
+    <p class="big">算出來了，然後呢？</p>
+    <p class="sub">
+      如果算完之後，你還是不知道自己的錢<br>
+      該留幾成在股票、剩下的該怎麼分——<br>
+      那才是你真正需要做財務規劃的地方。
+    </p>
+  </div>
+
+  <footer>
+    <p class="disclaim">本頁為一般性觀念整理，不構成個案建議，也不是任何特定商品的推介。</p>
+    <p>文中提到的 0050 僅用於說明「市值型工具會反映市場結構」，未比較任何商品優劣。</p>
+    <p>本頁所有計算都在你的裝置上完成，<b>不會上傳、不會儲存任何資料</b>。</p>
+    <p><span class="handle">@ivy_073</span>　2026／09</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var wm = document.querySelector('.watermark');
+  function fillWM() {
+    if (!wm) return;
+    var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+    n = Math.min(Math.max(n, 24), 160);
+    if (wm.childElementCount === n) return;
+    wm.textContent = '';
+    for (var i = 0; i < n; i++) {
+      var s = document.createElement('span');
+      s.textContent = '@ivy_073';
+      wm.appendChild(s);
+    }
+  }
+  fillWM();
+  window.addEventListener('resize', fillWM);
+
+  var total = document.getElementById('total');
+  var stock = document.getElementById('stock');
+  var share = document.getElementById('share');
+  var drop  = document.getElementById('drop');
+  var err   = document.getElementById('err');
+
+  function fmt(x) {
+    return (Math.round(x * 10) / 10).toLocaleString('zh-TW');
+  }
+  function calc() {
+    var t = parseFloat(total.value), s = parseFloat(stock.value);
+    err.textContent = '';
+    if (!(t > 0) || !(s >= 0)) { share.textContent = '—'; drop.textContent = '—'; return; }
+    if (s > t) {
+      err.textContent = '股票的金額比全部的錢還多，再確認一下數字。';
+      share.textContent = '—'; drop.textContent = '—'; return;
+    }
+    share.innerHTML = fmt(s / t * 10) + '<small>成</small>';
+    drop.innerHTML  = fmt(s * 0.2) + '<small>萬</small>';
+  }
+  total.addEventListener('input', calc);
+  stock.addEventListener('input', calc);
+})();
+</script>
+</body>
+</html>
