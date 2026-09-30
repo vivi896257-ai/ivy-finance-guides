@@ -100,6 +100,14 @@
     font-size:clamp(1.35rem,1.1rem + 1.4vw,1.8rem); color:var(--ink); white-space:nowrap;
   }
   .flow .step.hi .v { color:var(--key); font-size:clamp(1.7rem,1.3rem + 2.2vw,2.4rem); }
+  .pick { display:flex; align-items:center; gap:.45rem; margin:-.2rem 0 .7rem; flex-wrap:wrap; }
+  .pick .lbl { font-size:.84rem; color:var(--ink-soft); }
+  .pick button {
+    font:inherit; font-size:.88rem; font-weight:700; padding:.35rem .95rem;
+    border:1px solid var(--line); border-radius:999px;
+    background:var(--ground); color:var(--ink); cursor:pointer;
+  }
+  .pick button.on { background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
   .arrow { text-align:center; color:var(--ink-soft); font-size:.8rem; line-height:1; }
 
   table.bd { width:100%; border-collapse:collapse; font-size:.9rem; font-variant-numeric:tabular-nums; }
@@ -191,10 +199,15 @@
   <div id="out">
 
     <div class="card" style="margin-top:1.15rem">
-      <h2>20 年 vs 40 年</h2>
+      <h2>20 年 vs <span id="longH">40</span> 年</h2>
+      <div class="pick" role="group" aria-label="跟 20 年比較的年期">
+        <span class="lbl">跟 20 年比：</span>
+        <button type="button" data-y="30">30 年</button>
+        <button type="button" data-y="40" class="on">40 年</button>
+      </div>
       <div class="flow">
         <div class="step"><span class="k">貸 20 年，每月</span><span class="v" id="p20">—</span></div>
-        <div class="step"><span class="k">貸 40 年，每月</span><span class="v" id="p40">—</span></div>
+        <div class="step"><span class="k">貸 <span id="longK">40</span> 年，每月</span><span class="v" id="p40">—</span></div>
         <div class="arrow">↓</div>
         <div class="step hi"><span class="k">每個月少繳</span><span class="v" id="pDiff">—</span></div>
         <div class="arrow">↓</div>
@@ -342,15 +355,28 @@
   });
   showRate();
 
+  var longY = 40;
+  var pickBtns = document.querySelectorAll('.pick button');
+  Array.prototype.forEach.call(pickBtns, function (b) {
+    b.addEventListener('click', function () {
+      longY = parseInt(b.getAttribute('data-y'), 10);
+      Array.prototype.forEach.call(pickBtns, function (x) { x.classList.toggle('on', x === b); });
+      calc();
+    });
+  });
+
   function calc() {
     var P = num('loan') * 10000;
     var r = parseFloat(rateEl.value);
     if (P <= 0) return;
 
-    var pay20 = payFor(P, r, 20), pay40 = payFor(P, r, 40);
-    var int20 = interestFor(P, r, 20), int40 = interestFor(P, r, 40);
+    // longY：跟 20 年比較的那個年期（30 或 40，由上方按鈕切換）
+    var pay20 = payFor(P, r, 20), pay40 = payFor(P, r, longY);
+    var int20 = interestFor(P, r, 20), int40 = interestFor(P, r, longY);
     var dPay = pay20 - pay40, dInt = int40 - int20;
 
+    $('longH').textContent = longY;
+    $('longK').textContent = longY;
     $('p20').textContent = money(pay20) + ' 元';
     $('p40').textContent = money(pay40) + ' 元';
     $('pDiff').textContent = money(dPay) + ' 元';
@@ -358,14 +384,14 @@
 
     $('mainNote').innerHTML =
       '貸 <b>' + wan(P) + '</b>、利率 <b>' + r.toFixed(2) + '%</b>：' +
-      '把年期從 20 年拉到 40 年，每個月輕鬆 <b>' + money(dPay) + ' 元</b>，' +
+      '把年期從 20 年拉到 ' + longY + ' 年，每個月輕鬆 <b>' + money(dPay) + ' 元</b>，' +
       '但整筆算下來，總利息多付 <b>' + wan(dInt) + '</b>。';
 
     var terms = [20, 25, 30, 35, 40];
     var rows = '';
     terms.forEach(function (y) {
       var p = payFor(P, r, y), it = interestFor(P, r, y);
-      rows += '<tr' + (y === 40 ? ' class="hi"' : '') + '><td>' + y + ' 年</td><td>' +
+      rows += '<tr' + (y === longY ? ' class="hi"' : '') + '><td>' + y + ' 年</td><td>' +
               money(p) + ' 元</td><td>' + wan(it) + '</td><td>' +
               (y === 20 ? '—' : '＋' + wan(it - int20)) + '</td></tr>';
     });
