@@ -167,6 +167,19 @@
   a.handle.ig { display:inline-flex; align-items:center; gap:.3em; text-decoration:none; }
   a.handle.ig svg { width:1.1em; height:1.1em; flex:0 0 auto; }
   a.handle.ig:hover { opacity:.8; }
+  /* 官方 LINE 諮詢卡＋頁尾 LINE 圖示（2026-10-01） */
+  .line-cta { margin-top:2rem; padding:1.1rem 1.2rem; border:1px solid var(--line); border-radius:14px;
+              display:flex; gap:.9rem; align-items:center; flex-wrap:wrap; }
+  .line-cta > svg { width:2.6rem; height:2.6rem; flex:0 0 auto; }
+  .line-cta .txt { flex:1 1 13rem; min-width:0; }
+  .line-cta .txt b { display:block; font-size:1.02rem; margin-bottom:.2rem; }
+  .line-cta .txt p { margin:0; font-size:.9rem; color:var(--ink-soft); }
+  .line-cta a.btn { background:#06C755; color:#fff; font-weight:700; padding:.6rem 1.1rem; border-radius:999px;
+                    text-decoration:none; white-space:nowrap; }
+  .line-cta a.btn:hover { opacity:.88; }
+  a.handle.line { display:inline-flex; align-items:center; gap:.3em; text-decoration:none; }
+  a.handle.line svg { width:1.1em; height:1.1em; flex:0 0 auto; }
+  a.handle.line:hover { opacity:.8; }
 </style>
 
 <div class="watermark" aria-hidden="true"></div>
@@ -305,13 +318,22 @@
 
   </div>
 
+  <aside class="line-cta" aria-label="官方 LINE 諮詢">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#06C755"/><path fill="#fff" d="M12 5.4c-4.5 0-8.1 2.9-8.1 6.4 0 3.2 2.9 5.8 6.7 6.3.3.1.6.2.7.4.1.2.1.5 0 .8l-.1.7c0 .2-.2.8.7.4.9-.4 4.9-2.9 6.6-4.9 1.2-1.3 1.6-2.6 1.6-3.7 0-3.5-3.6-6.4-8.1-6.4z"/></svg>
+    <div class="txt">
+      <b>想把自己的狀況算清楚？</b>
+      <p>加入官方 LINE，輸入「諮詢」，我會先問你幾個小問題。</p>
+    </div>
+    <a class="btn" href="https://line.me/R/ti/p/@062buxpy" target="_blank" rel="noopener">加入官方 LINE →</a>
+  </aside>
+
   <footer>
     <p class="disclaim">
       本頁為一般性的房貸數學試算，<b>不代表銀行核貸結果，也不構成任何貸款方案的推介</b>。
       實際利率、年期、寬限期、提前清償條件與違約金，以各銀行契約與審核為準。
     </p>
     <p>本頁所有計算都在你的裝置上完成，<b>不會上傳、不會儲存任何資料</b>。</p>
-    <p><a class="handle ig" href="https://www.instagram.com/ivy_073/" target="_blank" rel="noopener" aria-label="Instagram @ivy_073"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@ivy_073</a>　2026／09</p>
+    <p><a class="handle ig" href="https://www.instagram.com/ivy_073/" target="_blank" rel="noopener" aria-label="Instagram @ivy_073"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@ivy_073</a>　<a class="handle line" href="https://line.me/R/ti/p/@062buxpy" target="_blank" rel="noopener" aria-label="官方 LINE"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#06C755"/><path fill="#fff" d="M12 5.4c-4.5 0-8.1 2.9-8.1 6.4 0 3.2 2.9 5.8 6.7 6.3.3.1.6.2.7.4.1.2.1.5 0 .8l-.1.7c0 .2-.2.8.7.4.9-.4 4.9-2.9 6.6-4.9 1.2-1.3 1.6-2.6 1.6-3.7 0-3.5-3.6-6.4-8.1-6.4z"/></svg>官方 LINE</a>　2026／09</p>
   </footer>
 
 </div>
