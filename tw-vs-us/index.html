@@ -1,0 +1,364 @@
+<title>台股 vs 美股・定期定額回測</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票，與各懶人包內頁同一套 ── */
+  :root {
+    --ground:#F3F1E4; --surface:#FCFDF5; --chip:#E9E6DB; --line:#DEDACD;
+    --ink:#1A1A16; --ink-soft:#6C6860; --accent:#B86048; --key:#C9603F;
+    --good:#4EA86C; --warn:#C65842; --on-accent:#FFF0E1;
+    --shadow: 0 2px 10px rgba(26,26,22,.07), 0 8px 28px rgba(26,26,22,.05);
+    --wm-color:#1A1A16; --wm-alpha:.075;
+    --font-sans: "Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    --font-serif: "Noto Serif TC","Songti TC","PingFang TC",serif;
+    --step: clamp(.9rem,.86rem + .2vw,1rem);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+      --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+      --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+      --wm-color:#F1EEE2; --wm-alpha:.06;
+      --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+    --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+    --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+    --wm-color:#F1EEE2; --wm-alpha:.06;
+    --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--font-sans); font-size:var(--step);
+    line-height:1.7; -webkit-text-size-adjust:100%;
+  }
+  .watermark {
+    position:fixed; inset:-25%; z-index:0; pointer-events:none; user-select:none;
+    display:flex; flex-wrap:wrap; align-content:center; justify-content:center;
+    gap:3.4rem 3.2rem; transform:rotate(-24deg);
+    font-family:var(--font-serif); font-weight:900; font-size:1.05rem;
+    letter-spacing:.1em; color:var(--wm-color); opacity:var(--wm-alpha); white-space:nowrap;
+  }
+  .wrap { position:relative; z-index:1; max-width:34rem; margin:0 auto; padding:2.2rem 1.15rem 3.5rem; }
+
+  a.back { display:inline-block; color:var(--ink-soft); text-decoration:none; font-size:.85rem; margin-bottom:1.2rem; }
+  a.back:hover { color:var(--accent); }
+
+  header h1 {
+    font-family:var(--font-serif); font-weight:900; line-height:1.25;
+    font-size:clamp(1.7rem,1.3rem + 2vw,2.3rem); margin:0 0 .5rem;
+  }
+  header h1 span { display:block; font-size:.5em; color:var(--accent); letter-spacing:.04em; margin-top:.5rem; }
+  .lede { color:var(--ink-soft); margin:0 0 1.6rem; font-size:.95rem; }
+
+  .card {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:1.1rem; box-shadow:var(--shadow);
+    padding:1.15rem 1.15rem 1.3rem; margin-bottom:1.15rem;
+  }
+  .card > h2 {
+    font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 .9rem; font-weight:700;
+  }
+  .card p { margin:0 0 .6rem; }
+  .card p:last-child { margin-bottom:0; }
+
+  .field { margin-bottom:1rem; }
+  .field:last-child { margin-bottom:0; }
+  .field label { display:block; font-size:.9rem; font-weight:600; margin-bottom:.3rem; }
+  .field .hint { display:block; font-size:.78rem; color:var(--ink-soft); font-weight:400; margin-top:.15rem; line-height:1.5; }
+  .field .row { display:flex; align-items:center; gap:.5rem; margin-top:.4rem; }
+  .field input[type=number] {
+    flex:1 1 auto; width:100%; min-width:0; font:inherit; font-variant-numeric:tabular-nums;
+    padding:.55rem .7rem; border:1px solid var(--line); border-radius:.6rem;
+    background:var(--ground); color:var(--ink);
+  }
+  .field input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .unit { flex:0 0 auto; color:var(--ink-soft); font-size:.85rem; }
+
+  input[type=range] { width:100%; accent-color:var(--accent); margin-top:.5rem; }
+  .rate-now { font-weight:700; color:var(--key); font-variant-numeric:tabular-nums; }
+
+  button.go {
+    width:100%; font:inherit; font-weight:700; font-size:1.02rem;
+    padding:.85rem 1rem; border:0; border-radius:.8rem;
+    background:var(--accent); color:var(--on-accent); cursor:pointer;
+  }
+  button.go:active { transform:translateY(1px); }
+
+  #out { display:none; }
+  #out.on { display:block; }
+
+  .flow { display:flex; flex-direction:column; gap:.2rem; }
+  .flow .step { display:flex; justify-content:space-between; align-items:baseline; gap:1rem; padding:.55rem 0; border-bottom:1px dashed var(--line); }
+  .flow .step:last-child { border-bottom:0; }
+  .flow .k { font-size:.9rem; color:var(--ink-soft); }
+  .flow .v {
+    font-family:var(--font-serif); font-weight:900; font-variant-numeric:tabular-nums;
+    font-size:clamp(1.35rem,1.1rem + 1.4vw,1.8rem); color:var(--ink); white-space:nowrap;
+  }
+  .flow .step.hi .v { color:var(--key); font-size:clamp(1.7rem,1.3rem + 2.2vw,2.4rem); }
+  .arrow { text-align:center; color:var(--ink-soft); font-size:.8rem; line-height:1; }
+
+  table.bd { width:100%; border-collapse:collapse; font-size:.9rem; font-variant-numeric:tabular-nums; }
+  table.bd th { text-align:right; font-size:.76rem; letter-spacing:.06em; color:var(--ink-soft); padding:.35rem 0 .35rem .4rem; border-bottom:1px solid var(--line); font-weight:600; }
+  table.bd th:first-child, table.bd td:first-child { text-align:left; padding-left:0; }
+  table.bd td { text-align:right; padding:.45rem 0 .45rem .4rem; border-bottom:1px dashed var(--line); white-space:nowrap; }
+  table.bd tr:last-child td { border-bottom:0; }
+  table.bd tr.hi td { color:var(--key); font-weight:800; }
+
+  details.how { margin-top:.9rem; border-top:1px solid var(--line); padding-top:.7rem; }
+  details.how summary { cursor:pointer; font-size:.82rem; color:var(--accent); font-weight:600; list-style:none; }
+  details.how summary::-webkit-details-marker { display:none; }
+  details.how summary::before { content:"▸ "; }
+  details.how[open] summary::before { content:"▾ "; }
+  details.how .body { font-size:.85rem; color:var(--ink-soft); margin-top:.55rem; }
+  details.how code {
+    display:block; background:var(--chip); border-radius:.45rem;
+    padding:.5rem .6rem; margin:.45rem 0; font-size:.82rem;
+    font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;
+    color:var(--ink); overflow-x:auto; white-space:pre-wrap;
+  }
+
+  .note { background:var(--chip); border-radius:.7rem; padding:.7rem .85rem; font-size:.84rem; color:var(--ink-soft); margin-top:.9rem; }
+  .note b { color:var(--ink); }
+
+  .section-title {
+    font-family:var(--font-serif); font-weight:900; font-size:1.35rem; line-height:1.4;
+    margin:2.2rem 0 .4rem;
+  }
+  .section-lede { color:var(--ink-soft); margin:0 0 1rem; font-size:.93rem; }
+
+  .money { border-left:.38rem solid var(--accent); }
+  .money .no { font-size:.74rem; letter-spacing:.12em; color:var(--accent); font-weight:700; }
+  .money h3 { font-family:var(--font-serif); font-weight:900; font-size:1.2rem; margin:.15rem 0 .5rem; }
+  .money ul { margin:.3rem 0 0; padding-left:1.2rem; }
+  .money li { margin:.15rem 0; }
+  .money .fig { color:var(--key); font-weight:800; font-variant-numeric:tabular-nums; }
+
+  a.next {
+    display:block; text-decoration:none; color:inherit; margin-top:.9rem;
+    background:var(--chip); border-radius:.7rem; padding:.75rem .9rem; font-size:.88rem;
+  }
+  a.next b { color:var(--accent); }
+
+  .motto { text-align:center; padding:1.4rem 1.1rem; }
+  .motto p { margin:0; font-family:var(--font-serif); font-weight:900; line-height:1.6; font-size:1.1rem; }
+  .motto p.em { color:var(--key); font-size:1.3rem; margin-top:.8rem; }
+
+  .cta { background:var(--accent); color:var(--on-accent); border-radius:1.1rem; padding:1.3rem 1.15rem; text-align:center; margin-top:1.4rem; }
+  .cta p.big { font-family:var(--font-serif); font-weight:900; font-size:1.25rem; margin:0 0 .5rem; line-height:1.4; }
+  .cta p.sub { margin:0; font-size:.9rem; opacity:.92; }
+
+  footer { margin-top:2.2rem; font-size:.82rem; color:var(--ink-soft); }
+  footer .disclaim { border-top:1px solid var(--line); padding-top:.9rem; }
+  footer .handle { color:var(--accent); font-weight:700; }
+  /* 頁尾 IG 連結：圖示＋帳號，點了開 Instagram */
+  a.handle.ig { display:inline-flex; align-items:center; gap:.3em; text-decoration:none; }
+  a.handle.ig svg { width:1.1em; height:1.1em; flex:0 0 auto; }
+  a.handle.ig:hover { opacity:.8; }
+  /* 官方 LINE 諮詢卡＋頁尾 LINE 圖示（2026-10-01） */
+  .line-cta { margin-top:2rem; padding:1.1rem 1.2rem; border:1px solid var(--line); border-radius:14px;
+              display:flex; gap:.9rem; align-items:center; flex-wrap:wrap; }
+  .line-cta > svg { width:2.6rem; height:2.6rem; flex:0 0 auto; }
+  .line-cta .txt { flex:1 1 13rem; min-width:0; }
+  .line-cta .txt b { display:block; font-size:1.02rem; margin-bottom:.2rem; }
+  .line-cta .txt p { margin:0; font-size:.9rem; color:var(--ink-soft); }
+  .line-cta a.btn { background:#06C755; color:#fff; font-weight:700; padding:.6rem 1.1rem; border-radius:999px;
+                    text-decoration:none; white-space:nowrap; }
+  .line-cta a.btn:hover { opacity:.88; }
+  a.handle.line { display:inline-flex; align-items:center; gap:.3em; text-decoration:none; }
+  a.handle.line svg { width:1.1em; height:1.1em; flex:0 0 auto; }
+  a.handle.line:hover { opacity:.8; }
+</style>
+<style>
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
+  @media (max-width:30rem) { .two { grid-template-columns:1fr; } }
+  .two .col { background:var(--chip); border-radius:.8rem; padding:.8rem .9rem; font-size:.88rem; }
+  .two .col b { display:block; margin-bottom:.35rem; }
+  .two .yes b { color:var(--good); } .two .no b { color:var(--warn); }
+  .two ul { margin:0; padding-left:1.1rem; } .two li { margin:.15rem 0; }
+  table.rows { width:100%; border-collapse:collapse; font-size:.88rem; font-variant-numeric:tabular-nums; }
+  table.rows th { font-size:.74rem; color:var(--ink-soft); font-weight:600; text-align:left; padding:.3rem .25rem; border-bottom:1px solid var(--line); }
+  table.rows td { padding:.3rem .25rem; border-bottom:1px dashed var(--line); vertical-align:middle; }
+  table.rows input { width:100%; min-width:0; font:inherit; padding:.4rem .5rem; border:1px solid var(--line); border-radius:.5rem; background:var(--ground); color:var(--ink); }
+  table.rows td.n { color:var(--ink-soft); width:2.2rem; }
+  table.rows td.x { width:2rem; text-align:center; }
+  button.ghost { font:inherit; font-size:.85rem; padding:.45rem .8rem; border:1px solid var(--line); border-radius:.6rem; background:var(--surface); color:var(--ink); cursor:pointer; }
+  button.del { font:inherit; border:0; background:none; color:var(--ink-soft); cursor:pointer; font-size:1rem; }
+  .btnrow { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.7rem; }
+  .check { list-style:none; margin:0; padding:0; }
+  .check li { border-bottom:1px dashed var(--line); padding:.7rem 0; }
+  .check li:last-child { border-bottom:0; }
+  .check label { display:flex; gap:.6rem; align-items:flex-start; cursor:pointer; font-weight:700; }
+  .check input[type=checkbox] { width:1.15rem; height:1.15rem; margin-top:.3rem; accent-color:var(--accent); flex:0 0 auto; }
+  .check .where { font-size:.82rem; color:var(--ink-soft); margin:.25rem 0 0 1.75rem; }
+  .bar { height:.55rem; background:var(--chip); border-radius:99px; overflow:hidden; margin:.4rem 0 .2rem; }
+  .bar i { display:block; height:100%; width:0; background:var(--accent); transition:width .25s; }
+</style>
+<style>
+  .quick { display:flex; gap:.5rem; margin-top:.5rem; flex-wrap:wrap; }
+  .quick button { flex:1 1 4rem; font:inherit; font-size:.9rem; padding:.5rem; border:1px solid var(--line); border-radius:.6rem;
+                  background:var(--surface); color:var(--ink); cursor:pointer; }
+  .quick button.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+  .yrs { display:flex; justify-content:space-between; font-size:.78rem; color:var(--ink-soft); }
+  .res3 { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+  .res3 .col { background:var(--chip); border-radius:.8rem; padding:.7rem .6rem; text-align:center; }
+  .res3 .nm { font-size:.82rem; color:var(--ink-soft); font-weight:700; }
+  .res3 .big { font-family:var(--font-serif); font-weight:900; font-size:clamp(1.05rem,.9rem + 1vw,1.4rem);
+               font-variant-numeric:tabular-nums; margin:.25rem 0 .1rem; white-space:nowrap; }
+  .res3 .sm { font-size:.76rem; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .res3 .col.hi .big { color:var(--key); }
+  /* 手機上三欄並排會把 SOXX 擠出畫面（10-14 預覽看到）⇒ 窄螢幕改成上下排、名稱靠左數字靠右 */
+  @media (max-width:32rem) {
+    .res3 { grid-template-columns:1fr; }
+    .res3 .col { display:grid; grid-template-columns:1fr auto; grid-template-areas:"nm big" "nm sm"; align-items:center; text-align:left; padding:.6rem .85rem; }
+    .res3 .nm { grid-area:nm; font-size:.95rem; color:var(--ink); }
+    .res3 .big { grid-area:big; text-align:right; margin:0; }
+    .res3 .sm { grid-area:sm; text-align:right; }
+  }
+  .inv { text-align:center; font-size:.88rem; color:var(--ink-soft); margin-bottom:.7rem; }
+  .inv b { color:var(--ink); font-variant-numeric:tabular-nums; }
+  .ans { text-align:center; padding:.4rem 0 .2rem; }
+  .ans .age { font-family:var(--font-serif); font-weight:900; font-size:clamp(2.2rem,1.7rem + 2.6vw,3rem); color:var(--key); line-height:1.1; }
+  .ans .sub { font-size:.9rem; color:var(--ink-soft); margin-top:.3rem; }
+  table.ref { width:100%; border-collapse:collapse; font-size:.9rem; }
+  table.ref td { padding:.45rem .2rem; border-bottom:1px dashed var(--line); }
+  table.ref td:last-child { text-align:right; font-weight:800; font-variant-numeric:tabular-nums; }
+  table.ref tr:last-child td { border-bottom:0; }
+  table.ref .p { display:block; font-size:.76rem; color:var(--ink-soft); font-weight:400; }
+</style>
+
+<div class="watermark" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <header>
+    <h1>每月定期定額<span>台股跟美股，過去 20 年差多少？</span></h1>
+  </header>
+  <p class="lede">填入你每個月想扣的金額、扣了幾年，算一次：如果過去這段時間你真的這樣扣，0050、QQQ、SOXX 現在各會有多少。</p>
+
+  <div class="card">
+    <h2>回測試算</h2>
+    <div class="field">
+      <label for="amt">每個月扣多少</label>
+      <div class="row"><input id="amt" type="number" inputmode="numeric" min="1000" step="1000" value="5000"><span class="unit">元</span></div>
+      <div class="quick"><button type="button" data-v="3000">3,000</button><button type="button" data-v="5000" class="on">5,000</button><button type="button" data-v="10000">1 萬</button></div>
+    </div>
+    <div class="field">
+      <label for="yrs">扣了幾年：<span class="rate-now" id="yrsv">20 年</span></label>
+      <input id="yrs" type="range" min="1" max="20" step="1" value="20">
+      <div class="yrs"><span>1 年</span><span>20 年</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>結果（算到 2026/09）</h2>
+    <p class="inv">從 <b id="from"></b> 扣到 2026/08，總共投入 <b id="tot"></b></p>
+    <div class="res3">
+      <div class="col" id="ca"><div class="nm">0050</div><div class="big" id="av"></div><div class="sm" id="ag"></div></div>
+      <div class="col" id="cb"><div class="nm">QQQ</div><div class="big" id="bv"></div><div class="sm" id="bg"></div></div>
+      <div class="col" id="cc"><div class="nm">SOXX</div><div class="big" id="cv"></div><div class="sm" id="cg"></div></div>
+    </div>
+    <details class="how"><summary>怎麼算的</summary><div class="body">
+      每月買進一次，配息再投入；最後以 2026/09 的價格估值。0050 用證交所收盤價，加計歷年現金配息再投入與 2025 年一拆四；
+      QQQ、SOXX 用含息還原價、以美元報酬計算。未計匯率、手續費與稅。以 20 年、每月 5,000 驗算：0050 約 1,071 萬、QQQ 約 1,067 萬、SOXX 約 2,494 萬。
+    </div></details>
+  </div>
+
+  <h2 class="section-title">三檔差在哪</h2>
+  <p class="section-lede">只看結構，不比誰比較好。</p>
+  <div class="card money">
+    <span class="no">0050</span>
+    <h3>台灣前 50 大公司</h3>
+    <p>台積電一家就佔一半以上。台積電好，它就好；台積電不好，它也很難好。</p>
+  </div>
+  <div class="card money">
+    <span class="no">QQQ</span>
+    <h3>美國那斯達克前 100 大</h3>
+    <p>以大型科技公司為主，一次參與很多全球龍頭企業的成長。</p>
+  </div>
+  <div class="card money">
+    <span class="no">SOXX</span>
+    <h3>只投資半導體</h3>
+    <p>漲的時候最多，跌的時候也最兇。產業集中，波動比前兩檔大很多。</p>
+  </div>
+
+  <div class="card">
+    <h2>投資美股前，先知道這三件事</h2>
+    <ul class="check" style="list-style:disc;padding-left:1.2rem">
+      <li style="border:0;padding:.3rem 0"><b>匯率</b>：用台幣換美元投資，台幣升值時，換回來會變少。</li>
+      <li style="border:0;padding:.3rem 0"><b>怎麼買</b>：要透過複委託，或海外券商開戶。</li>
+      <li style="border:0;padding:.3rem 0"><b>費用和稅</b>：手續費、內扣費用、股利預扣稅，跟台股都不一樣。</li>
+    </ul>
+  </div>
+
+  <div class="card motto">
+    <p>投資美股不是為了投資國外，</p>
+    <p class="em">而是讓你跟著全世界<br>最強的企業一起成長。</p>
+  </div>
+
+  <div class="card">
+    <h2>這份試算</h2>
+    <div class="two">
+      <div class="col yes"><b>可以幫你</b><ul><li>看懂過去同樣扣法，三檔差多少</li><li>換成你自己的金額和年數算一次</li></ul></div>
+      <div class="col no"><b>沒辦法幫你</b><ul><li>預測未來報酬</li><li>判斷哪一檔適合你</li></ul></div>
+    </div>
+  </div>
+
+  <aside class="line-cta" aria-label="官方 LINE 諮詢">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#06C755"/><path fill="#fff" d="M12 5.4c-4.5 0-8.1 2.9-8.1 6.4 0 3.2 2.9 5.8 6.7 6.3.3.1.6.2.7.4.1.2.1.5 0 .8l-.1.7c0 .2-.2.8.7.4.9-.4 4.9-2.9 6.6-4.9 1.2-1.3 1.6-2.6 1.6-3.7 0-3.5-3.6-6.4-8.1-6.4z"/></svg>
+    <div class="txt">
+      <b>想知道台股、美股怎麼一起配？</b>
+      <p>加入官方 LINE，輸入「資產健檢」，我會先問你幾個小問題。</p>
+    </div>
+    <a class="btn" href="https://line.me/R/ti/p/@062buxpy" target="_blank" rel="noopener">加入官方 LINE →</a>
+  </aside>
+
+  <footer>
+    <p class="disclaim">本頁為過去資料的回測試算與一般性觀念整理，<b>不構成投資建議</b>。過去績效不代表未來。資料來源：0050 證交所收盤價與歷年配息（FinMind）、QQQ／SOXX 含息還原價（Yahoo Finance），QQQ／SOXX 以美元報酬計算，未計匯率與費用，資料至 2026/09。</p>
+    <p>本頁所有計算都在你的裝置上完成，<b>不會上傳、不會儲存任何資料</b>。</p>
+    <p><a class="handle ig" href="https://www.instagram.com/ivy_073/" target="_blank" rel="noopener" aria-label="Instagram @ivy_073"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@ivy_073</a>　<a class="handle line" href="https://line.me/R/ti/p/@062buxpy" target="_blank" rel="noopener" aria-label="官方 LINE"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#06C755"/><path fill="#fff" d="M12 5.4c-4.5 0-8.1 2.9-8.1 6.4 0 3.2 2.9 5.8 6.7 6.3.3.1.6.2.7.4.1.2.1.5 0 .8l-.1.7c0 .2-.2.8.7.4.9-.4 4.9-2.9 6.6-4.9 1.2-1.3 1.6-2.6 1.6-3.7 0-3.5-3.6-6.4-8.1-6.4z"/></svg>官方 LINE</a>　2026／10</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var wm = document.querySelector('.watermark');
+  function fillWM() {
+    if (!wm) return;
+    var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+    n = Math.min(Math.max(n, 24), 160);
+    if (wm.childElementCount === n) return;
+    wm.textContent = '';
+    for (var i = 0; i < n; i++) { var s = document.createElement('span'); s.textContent = '@ivy_073'; wm.appendChild(s); }
+  }
+  fillWM(); window.addEventListener('resize', fillWM);
+  function wan(x) { return x >= 10000 ? (Math.round(x / 1000) / 10).toLocaleString('zh-TW') + ' 萬' : Math.round(x).toLocaleString('zh-TW') + ' 元'; }
+
+  var D = {"m": ["2006/09", "2006/10", "2006/11", "2006/12", "2007/01", "2007/02", "2007/03", "2007/04", "2007/05", "2007/06", "2007/07", "2007/08", "2007/09", "2007/10", "2007/11", "2007/12", "2008/01", "2008/02", "2008/03", "2008/04", "2008/05", "2008/06", "2008/07", "2008/08", "2008/09", "2008/10", "2008/11", "2008/12", "2009/01", "2009/02", "2009/03", "2009/04", "2009/05", "2009/06", "2009/07", "2009/08", "2009/09", "2009/10", "2009/11", "2009/12", "2010/01", "2010/02", "2010/03", "2010/04", "2010/05", "2010/06", "2010/07", "2010/08", "2010/09", "2010/10", "2010/11", "2010/12", "2011/01", "2011/02", "2011/03", "2011/04", "2011/05", "2011/06", "2011/07", "2011/08", "2011/09", "2011/10", "2011/11", "2011/12", "2012/01", "2012/02", "2012/03", "2012/04", "2012/05", "2012/06", "2012/07", "2012/08", "2012/09", "2012/10", "2012/11", "2012/12", "2013/01", "2013/02", "2013/03", "2013/04", "2013/05", "2013/06", "2013/07", "2013/08", "2013/09", "2013/10", "2013/11", "2013/12", "2014/01", "2014/02", "2014/03", "2014/04", "2014/05", "2014/06", "2014/07", "2014/08", "2014/09", "2014/10", "2014/11", "2014/12", "2015/01", "2015/02", "2015/03", "2015/04", "2015/05", "2015/06", "2015/07", "2015/08", "2015/09", "2015/10", "2015/11", "2015/12", "2016/01", "2016/02", "2016/03", "2016/04", "2016/05", "2016/06", "2016/07", "2016/08", "2016/09", "2016/10", "2016/11", "2016/12", "2017/01", "2017/02", "2017/03", "2017/04", "2017/05", "2017/06", "2017/07", "2017/08", "2017/09", "2017/10", "2017/11", "2017/12", "2018/01", "2018/02", "2018/03", "2018/04", "2018/05", "2018/06", "2018/07", "2018/08", "2018/09", "2018/10", "2018/11", "2018/12", "2019/01", "2019/02", "2019/03", "2019/04", "2019/05", "2019/06", "2019/07", "2019/08", "2019/09", "2019/10", "2019/11", "2019/12", "2020/01", "2020/02", "2020/03", "2020/04", "2020/05", "2020/06", "2020/07", "2020/08", "2020/09", "2020/10", "2020/11", "2020/12", "2021/01", "2021/02", "2021/03", "2021/04", "2021/05", "2021/06", "2021/07", "2021/08", "2021/09", "2021/10", "2021/11", "2021/12", "2022/01", "2022/02", "2022/03", "2022/04", "2022/05", "2022/06", "2022/07", "2022/08", "2022/09", "2022/10", "2022/11", "2022/12", "2023/01", "2023/02", "2023/03", "2023/04", "2023/05", "2023/06", "2023/07", "2023/08", "2023/09", "2023/10", "2023/11", "2023/12", "2024/01", "2024/02", "2024/03", "2024/04", "2024/05", "2024/06", "2024/07", "2024/08", "2024/09", "2024/10", "2024/11", "2024/12", "2025/01", "2025/02", "2025/03", "2025/04", "2025/05", "2025/06", "2025/07", "2025/08", "2025/09", "2025/10", "2025/11", "2025/12", "2026/01", "2026/02", "2026/03", "2026/04", "2026/05", "2026/06", "2026/07", "2026/08"], "a": [1.195892, 1.2487, 1.259127, 1.33834, 1.382084, 1.341887, 1.325335, 1.340704, 1.360803, 1.418735, 1.55115, 1.496765, 1.555879, 1.639821, 1.702828, 1.518937, 1.473577, 1.382858, 1.450284, 1.472351, 1.574104, 1.534874, 1.34608, 1.284783, 1.26149, 1.118055, 0.955227, 0.84614, 0.890399, 0.803963, 0.8313, 0.970848, 1.174182, 1.242393, 1.183294, 1.280665, 1.30696, 1.396781, 1.362007, 1.412402, 1.498605, 1.389857, 1.400467, 1.452188, 1.444231, 1.32169, 1.304715, 1.457493, 1.424338, 1.53176, 1.565644, 1.59872, 1.693817, 1.725516, 1.652471, 1.649714, 1.713112, 1.718625, 1.64558, 1.663496, 1.520163, 1.386477, 1.502658, 1.43832, 1.402862, 1.49551, 1.598451, 1.564137, 1.525534, 1.405436, 1.446898, 1.464055, 1.519815, 1.572716, 1.491976, 1.585317, 1.611986, 1.623839, 1.641618, 1.629765, 1.675695, 1.68014, 1.647544, 1.665324, 1.668287, 1.693474, 1.746847, 1.742298, 1.775657, 1.692258, 1.757461, 1.837828, 1.859057, 1.915163, 2.018275, 2.009177, 2.116838, 1.986431, 2.038372, 2.07566, 2.067892, 2.117608, 2.175093, 2.133144, 2.224809, 2.190629, 2.176646, 2.027497, 1.918742, 1.976227, 2.027847, 1.999015, 1.907714, 1.907714, 1.981396, 2.047069, 1.946157, 2.040661, 2.122352, 2.247389, 2.239282, 2.317113, 2.354408, 2.33495, 2.331707, 2.364136, 2.401892, 2.478248, 2.496507, 2.552944, 2.670797, 2.738982, 2.779163, 2.728937, 2.849479, 2.76577, 2.76577, 2.927908, 2.807701, 2.824873, 2.72699, 2.793963, 2.783659, 2.983315, 2.993704, 3.02487, 2.714938, 2.72879, 2.5643, 2.683223, 2.747492, 2.851036, 2.963507, 2.80462, 2.95101, 2.963296, 2.948893, 3.094718, 3.244143, 3.314355, 3.515988, 3.309709, 3.246526, 2.820965, 3.08485, 3.155467, 3.363601, 3.817907, 3.868438, 3.857209, 3.870309, 4.278301, 4.654477, 5.00263, 5.105935, 5.193936, 5.289588, 5.268545, 5.291501, 5.289706, 5.408619, 5.138188, 5.236003, 5.381767, 5.615757, 5.580933, 5.508377, 5.371109, 5.01225, 5.065197, 4.374934, 4.6869, 4.587306, 4.071409, 3.967831, 4.714787, 4.412021, 4.8428, 4.857044, 4.924192, 4.789896, 5.093079, 5.318941, 5.345155, 5.198571, 5.130441, 5.027212, 5.44219, 5.570193, 5.678063, 6.035187, 6.65223, 6.599401, 7.165728, 7.886316, 7.815936, 7.68213, 7.798944, 8.092042, 8.143015, 8.242839, 8.29808, 8.097841, 7.591861, 7.471287, 7.574636, 8.378176, 8.864161, 9.020281, 10.07843, 11.127905, 10.668217, 11.613612, 12.575629, 14.132193, 13.270366, 16.638524, 18.555648, 19.232797, 18.045073], "b": [34.741737365722656, 36.39122772216797, 37.63902282714844, 36.93186569213867, 37.710548400878906, 37.07733154296875, 37.27193832397461, 39.35257339477539, 40.594154357910156, 40.7886848449707, 40.72870635986328, 41.8769416809082, 44.07640838623047, 47.18000793457031, 43.99067306518555, 43.95928192138672, 38.73257064819336, 36.86159896850586, 37.55176544189453, 40.54937744140625, 42.95433807373047, 38.824241638183594, 39.07350540161133, 39.64079284667969, 33.46623229980469, 28.288488388061523, 25.045917510986328, 25.616323471069336, 25.03060531616211, 23.712759017944336, 26.159088134765625, 29.575637817382812, 30.524682998657227, 31.426057815551758, 34.07799530029297, 34.57902145385742, 36.53205108642578, 35.41663360595703, 37.664756774902344, 39.62436294555664, 37.06071090698242, 38.766937255859375, 41.75620651245117, 42.69260787963867, 39.5366096496582, 37.17403793334961, 39.872222900390625, 37.826805114746094, 42.80967712402344, 45.52292251586914, 45.444393157958984, 47.60623550415039, 48.952423095703125, 50.49967956542969, 50.273284912109375, 51.717674255371094, 51.08739471435547, 50.052642822265625, 50.886104583740234, 48.30671310424805, 46.13734817504883, 50.93655014038086, 49.56534194946289, 49.260921478271484, 53.407894134521484, 56.83136749267578, 59.703086853027344, 59.0048713684082, 54.85084915161133, 56.837223052978516, 57.40418243408203, 60.38069152832031, 60.9171257019043, 57.70115661621094, 58.456298828125, 58.18331527709961, 59.737728118896484, 59.943206787109375, 61.75635528564453, 63.32330322265625, 65.58868408203125, 64.01764678955078, 68.05976867675781, 67.79029846191406, 71.06604766845703, 74.58872985839844, 77.23745727539062, 79.49827575683594, 77.97087860107422, 81.9882583618164, 79.74703216552734, 79.49234771728516, 83.05807495117188, 85.65271759033203, 86.66508483886719, 91.00652313232422, 90.31796264648438, 92.70411682128906, 96.91876983642578, 94.7471694946289, 92.77424621582031, 99.47309112548828, 97.12651062011719, 98.99365997314453, 101.21946716308594, 98.7050552368164, 103.20378875732422, 96.16068267822266, 94.03813934326172, 104.73021697998047, 105.36783599853516, 103.68743896484375, 96.522216796875, 95.01129913330078, 101.52204132080078, 98.28672790527344, 102.5818862915039, 100.24507904052734, 107.41340637207031, 108.54133605957031, 110.9439468383789, 109.32723999023438, 109.80381774902344, 111.04707336425781, 116.75501251220703, 121.86312866210938, 124.3331298828125, 127.72366333007812, 132.70150756835938, 129.6255645751953, 134.89007568359375, 137.68714904785156, 137.2806396484375, 143.6042938232422, 146.43577575683594, 147.3189239501953, 160.21986389160156, 158.1485137939453, 151.6978759765625, 152.46519470214844, 161.11448669433594, 162.9593048095703, 167.51625061035156, 177.19984436035156, 176.70074462890625, 161.51205444335938, 161.08412170410156, 147.133056640625, 160.3908233642578, 165.18844604492188, 171.67140197753906, 181.11207580566406, 166.21534729003906, 178.83111572265625, 183.00648498535156, 179.53021240234375, 181.1780548095703, 189.11380004882812, 196.80963134765625, 204.45838928222656, 210.67066955566406, 197.90948486328125, 183.49009704589844, 210.9654541015625, 224.89102172851562, 239.0292205810547, 256.5895690917969, 284.6725769042969, 268.2223815917969, 260.0553283691406, 289.2484436035156, 303.4286804199219, 304.22174072265625, 303.8155822753906, 309.0313720703125, 327.2945556640625, 323.3631286621094, 343.61248779296875, 353.4429931640625, 368.3536071777344, 347.4194641113281, 374.7406005859375, 382.2236022949219, 386.6280822753906, 352.8096008300781, 337.0179748535156, 352.7496337890625, 304.79071044921875, 299.95489501953125, 273.23529052734375, 307.5310363769531, 291.7479553222656, 261.01068115234375, 271.4507141113281, 286.5003967285156, 260.6761779785156, 288.4197998046875, 287.3821105957031, 314.66253662109375, 316.26068115234375, 341.1940002441406, 362.702392578125, 376.7031555175781, 371.1165771484375, 352.2643127441406, 344.9883728027344, 382.3120422363281, 403.67169189453125, 411.0152893066406, 432.730712890625, 438.24786376953125, 419.07989501953125, 444.86090087890625, 473.64398193359375, 465.6957702636719, 470.8363952636719, 483.1798400878906, 479.00213623046875, 504.6327209472656, 506.9239196777344, 517.8906860351562, 503.8896789550781, 465.6636657714844, 472.1681823730469, 515.5051879882812, 548.4244995117188, 561.716552734375, 567.0751342773438, 597.5623168945312, 626.1281127929688, 616.3540649414062, 612.2249145507812, 619.7592163085938, 605.228759765625, 575.9462280273438, 666.3126831054688, 736.7318115234375, 735.6334838867188, 687.2738647460938, 716.013916015625], "c": [16.850818634033203, 16.686372756958008, 17.234539031982422, 16.724706649780273, 16.669876098632812, 16.96320152282715, 16.5474796295166, 17.554597854614258, 17.702789306640625, 18.090106964111328, 18.098346710205078, 18.34566879272461, 18.5656681060791, 17.78704833984375, 16.271093368530273, 16.365352630615234, 14.106539726257324, 13.825566291809082, 13.652027130126953, 14.70705795288086, 15.954912185668945, 14.140340805053711, 12.97762393951416, 13.549323081970215, 11.196279525756836, 9.221598625183105, 7.4761505126953125, 7.90285587310791, 7.696714878082275, 7.571367263793945, 8.67447280883789, 9.752514839172363, 10.14529037475586, 10.247365951538086, 11.832263946533203, 12.142541885375977, 12.519901275634766, 11.348692893981934, 12.120179176330566, 13.825491905212402, 12.070281982421875, 13.03354263305664, 13.878856658935547, 14.159682273864746, 13.232934951782227, 12.329877853393555, 12.970210075378418, 11.613388061523438, 13.345377922058105, 14.267793655395508, 14.964539527893066, 15.712069511413574, 16.78116226196289, 17.511762619018555, 16.69342041015625, 17.170873641967773, 16.820560455322266, 15.710503578186035, 14.852785110473633, 13.683701515197754, 13.032301902770996, 14.871359825134277, 14.34063720703125, 14.047325134277344, 15.78475284576416, 16.401819229125977, 16.935171127319336, 15.983726501464844, 14.305875778198242, 14.938194274902344, 14.901076316833496, 15.403580665588379, 14.878456115722656, 14.307753562927246, 14.60601806640625, 14.977424621582031, 16.12289810180664, 16.71001625061035, 17.099163055419922, 17.39950180053711, 18.390045166015625, 18.38213348388672, 18.801742553710938, 18.060897827148438, 19.37500762939453, 20.02034568786621, 20.19477081298828, 21.204914093017578, 20.974529266357422, 22.38312339782715, 23.302196502685547, 22.869428634643555, 23.88117027282715, 25.335302352905273, 24.232742309570312, 25.786888122558594, 25.537548065185547, 25.625762939453125, 27.47528839111328, 27.534753799438477, 26.19492530822754, 28.71156120300293, 27.944061279296875, 27.584440231323242, 30.039426803588867, 27.44172477722168, 26.085880279541016, 24.738969802856445, 24.410581588745117, 26.83186149597168, 27.452171325683594, 26.978958129882812, 24.933916091918945, 25.366348266601562, 27.59657859802246, 26.319461822509766, 28.605627059936523, 28.29439926147461, 31.4248046875, 32.905372619628906, 34.284542083740234, 33.789939880371094, 36.223445892333984, 37.323795318603516, 38.887054443359375, 39.98195266723633, 41.742366790771484, 41.50452423095703, 45.12715148925781, 42.85710906982422, 44.92965316772461, 46.23493957519531, 48.63105010986328, 52.97062301635742, 52.921566009521484, 52.17353057861328, 56.67778778076172, 56.80375671386719, 55.42850875854492, 51.94055938720703, 57.7004508972168, 55.06007766723633, 57.302764892578125, 58.791709899902344, 57.41604995727539, 50.56211853027344, 52.20347213745117, 48.78823471069336, 53.694740295410156, 57.130531311035156, 59.09431076049805, 65.95962524414062, 55.03495407104492, 62.113975524902344, 65.61078643798828, 64.09249114990234, 66.48018646240234, 70.54928588867188, 73.41719818115234, 79.24046325683594, 76.70329284667969, 73.14677429199219, 64.98187255859375, 74.42786407470703, 79.75408935546875, 85.96070098876953, 92.1553726196289, 97.4963607788086, 97.01764678955078, 97.29473114013672, 115.23572540283203, 121.0138931274414, 124.92022705078125, 133.0552978515625, 135.5699005126953, 134.94320678710938, 138.34852600097656, 145.40943908691406, 146.27053833007812, 149.8816375732422, 143.08526611328125, 152.3146514892578, 169.83970642089844, 174.36866760253906, 154.160888671875, 152.45358276367188, 152.4582061767578, 129.10372924804688, 137.27291870117188, 112.79048156738281, 131.41200256347656, 119.2686767578125, 103.38623809814453, 105.90010070800781, 125.86505126953125, 113.189453125, 131.30726623535156, 133.30775451660156, 145.00479125976562, 134.39695739746094, 155.44964599609375, 165.6388397216797, 174.79490661621094, 166.75233459472656, 155.2147674560547, 144.97088623046875, 168.32272338867188, 189.1597137451172, 192.42677307128906, 214.11065673828125, 222.7666473388672, 211.003173828125, 230.7437286376953, 243.4976043701172, 232.3905029296875, 228.204345703125, 228.21568298339844, 216.0126190185547, 213.1820526123047, 213.60736083984375, 216.2243194580078, 206.6982879638672, 186.76449584960938, 182.46681213378906, 203.4092254638672, 237.4360809326172, 238.759033203125, 244.02102661132812, 270.2515563964844, 305.5680236816406, 295.78948974609375, 300.6251525878906, 345.69647216796875, 351.67608642578125, 328.28936767578125, 460.91961669921875, 568.4382934570312, 640.3413696289062, 504.56011962890625, 510.70611572265625], "av": 19.884962718905296, "bv": 739.77001953125, "cv": 568.6400146484375};
+  var $ = function (id) { return document.getElementById(id); };
+  var amt = $('amt'), yrs = $('yrs');
+  function calc() {
+    var a = Math.max(0, +amt.value || 0), n = +yrs.value, k = n * 12, st = 240 - k, ua = 0, ub = 0, uc = 0;
+    for (var i = st; i < 240; i++) { ua += a / D.a[i]; ub += a / D.b[i]; uc += a / D.c[i]; }
+    var tot = a * k, va = ua * D.av, vb = ub * D.bv, vc = uc * D.cv, mx = Math.max(va, vb, vc);
+    $('yrsv').textContent = n + ' 年'; $('from').textContent = D.m[st]; $('tot').textContent = wan(tot);
+    [['a', va], ['b', vb], ['c', vc]].forEach(function (p) {
+      $(p[0] + 'v').textContent = wan(p[1]); $(p[0] + 'g').textContent = '總報酬 ' + Math.round((p[1] / tot - 1) * 100) + '%';
+      $('c' + p[0]).classList.toggle('hi', p[1] === mx);
+    });
+  }
+  document.querySelectorAll('.quick button').forEach(function (b) {
+    b.addEventListener('click', function () { amt.value = b.dataset.v; document.querySelectorAll('.quick button').forEach(function (x) { x.classList.toggle('on', x === b); }); calc(); });
+  });
+  amt.addEventListener('input', function () { document.querySelectorAll('.quick button').forEach(function (x) { x.classList.toggle('on', x.dataset.v === amt.value); }); calc(); });
+  yrs.addEventListener('input', calc);
+  calc();
+
+})();
+</script>

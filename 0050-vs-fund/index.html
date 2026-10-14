@@ -1,0 +1,342 @@
+<title>0050 vs 主動式科技基金・定期定額回測</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票，與各懶人包內頁同一套 ── */
+  :root {
+    --ground:#F3F1E4; --surface:#FCFDF5; --chip:#E9E6DB; --line:#DEDACD;
+    --ink:#1A1A16; --ink-soft:#6C6860; --accent:#B86048; --key:#C9603F;
+    --good:#4EA86C; --warn:#C65842; --on-accent:#FFF0E1;
+    --shadow: 0 2px 10px rgba(26,26,22,.07), 0 8px 28px rgba(26,26,22,.05);
+    --wm-color:#1A1A16; --wm-alpha:.075;
+    --font-sans: "Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    --font-serif: "Noto Serif TC","Songti TC","PingFang TC",serif;
+    --step: clamp(.9rem,.86rem + .2vw,1rem);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+      --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+      --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+      --wm-color:#F1EEE2; --wm-alpha:.06;
+      --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+    --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+    --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+    --wm-color:#F1EEE2; --wm-alpha:.06;
+    --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--font-sans); font-size:var(--step);
+    line-height:1.7; -webkit-text-size-adjust:100%;
+  }
+  .watermark {
+    position:fixed; inset:-25%; z-index:0; pointer-events:none; user-select:none;
+    display:flex; flex-wrap:wrap; align-content:center; justify-content:center;
+    gap:3.4rem 3.2rem; transform:rotate(-24deg);
+    font-family:var(--font-serif); font-weight:900; font-size:1.05rem;
+    letter-spacing:.1em; color:var(--wm-color); opacity:var(--wm-alpha); white-space:nowrap;
+  }
+  .wrap { position:relative; z-index:1; max-width:34rem; margin:0 auto; padding:2.2rem 1.15rem 3.5rem; }
+
+  a.back { display:inline-block; color:var(--ink-soft); text-decoration:none; font-size:.85rem; margin-bottom:1.2rem; }
+  a.back:hover { color:var(--accent); }
+
+  header h1 {
+    font-family:var(--font-serif); font-weight:900; line-height:1.25;
+    font-size:clamp(1.7rem,1.3rem + 2vw,2.3rem); margin:0 0 .5rem;
+  }
+  header h1 span { display:block; font-size:.5em; color:var(--accent); letter-spacing:.04em; margin-top:.5rem; }
+  .lede { color:var(--ink-soft); margin:0 0 1.6rem; font-size:.95rem; }
+
+  .card {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:1.1rem; box-shadow:var(--shadow);
+    padding:1.15rem 1.15rem 1.3rem; margin-bottom:1.15rem;
+  }
+  .card > h2 {
+    font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 .9rem; font-weight:700;
+  }
+  .card p { margin:0 0 .6rem; }
+  .card p:last-child { margin-bottom:0; }
+
+  .field { margin-bottom:1rem; }
+  .field:last-child { margin-bottom:0; }
+  .field label { display:block; font-size:.9rem; font-weight:600; margin-bottom:.3rem; }
+  .field .hint { display:block; font-size:.78rem; color:var(--ink-soft); font-weight:400; margin-top:.15rem; line-height:1.5; }
+  .field .row { display:flex; align-items:center; gap:.5rem; margin-top:.4rem; }
+  .field input[type=number] {
+    flex:1 1 auto; width:100%; min-width:0; font:inherit; font-variant-numeric:tabular-nums;
+    padding:.55rem .7rem; border:1px solid var(--line); border-radius:.6rem;
+    background:var(--ground); color:var(--ink);
+  }
+  .field input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .unit { flex:0 0 auto; color:var(--ink-soft); font-size:.85rem; }
+
+  input[type=range] { width:100%; accent-color:var(--accent); margin-top:.5rem; }
+  .rate-now { font-weight:700; color:var(--key); font-variant-numeric:tabular-nums; }
+
+  button.go {
+    width:100%; font:inherit; font-weight:700; font-size:1.02rem;
+    padding:.85rem 1rem; border:0; border-radius:.8rem;
+    background:var(--accent); color:var(--on-accent); cursor:pointer;
+  }
+  button.go:active { transform:translateY(1px); }
+
+  #out { display:none; }
+  #out.on { display:block; }
+
+  .flow { display:flex; flex-direction:column; gap:.2rem; }
+  .flow .step { display:flex; justify-content:space-between; align-items:baseline; gap:1rem; padding:.55rem 0; border-bottom:1px dashed var(--line); }
+  .flow .step:last-child { border-bottom:0; }
+  .flow .k { font-size:.9rem; color:var(--ink-soft); }
+  .flow .v {
+    font-family:var(--font-serif); font-weight:900; font-variant-numeric:tabular-nums;
+    font-size:clamp(1.35rem,1.1rem + 1.4vw,1.8rem); color:var(--ink); white-space:nowrap;
+  }
+  .flow .step.hi .v { color:var(--key); font-size:clamp(1.7rem,1.3rem + 2.2vw,2.4rem); }
+  .arrow { text-align:center; color:var(--ink-soft); font-size:.8rem; line-height:1; }
+
+  table.bd { width:100%; border-collapse:collapse; font-size:.9rem; font-variant-numeric:tabular-nums; }
+  table.bd th { text-align:right; font-size:.76rem; letter-spacing:.06em; color:var(--ink-soft); padding:.35rem 0 .35rem .4rem; border-bottom:1px solid var(--line); font-weight:600; }
+  table.bd th:first-child, table.bd td:first-child { text-align:left; padding-left:0; }
+  table.bd td { text-align:right; padding:.45rem 0 .45rem .4rem; border-bottom:1px dashed var(--line); white-space:nowrap; }
+  table.bd tr:last-child td { border-bottom:0; }
+  table.bd tr.hi td { color:var(--key); font-weight:800; }
+
+  details.how { margin-top:.9rem; border-top:1px solid var(--line); padding-top:.7rem; }
+  details.how summary { cursor:pointer; font-size:.82rem; color:var(--accent); font-weight:600; list-style:none; }
+  details.how summary::-webkit-details-marker { display:none; }
+  details.how summary::before { content:"▸ "; }
+  details.how[open] summary::before { content:"▾ "; }
+  details.how .body { font-size:.85rem; color:var(--ink-soft); margin-top:.55rem; }
+  details.how code {
+    display:block; background:var(--chip); border-radius:.45rem;
+    padding:.5rem .6rem; margin:.45rem 0; font-size:.82rem;
+    font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;
+    color:var(--ink); overflow-x:auto; white-space:pre-wrap;
+  }
+
+  .note { background:var(--chip); border-radius:.7rem; padding:.7rem .85rem; font-size:.84rem; color:var(--ink-soft); margin-top:.9rem; }
+  .note b { color:var(--ink); }
+
+  .section-title {
+    font-family:var(--font-serif); font-weight:900; font-size:1.35rem; line-height:1.4;
+    margin:2.2rem 0 .4rem;
+  }
+  .section-lede { color:var(--ink-soft); margin:0 0 1rem; font-size:.93rem; }
+
+  .money { border-left:.38rem solid var(--accent); }
+  .money .no { font-size:.74rem; letter-spacing:.12em; color:var(--accent); font-weight:700; }
+  .money h3 { font-family:var(--font-serif); font-weight:900; font-size:1.2rem; margin:.15rem 0 .5rem; }
+  .money ul { margin:.3rem 0 0; padding-left:1.2rem; }
+  .money li { margin:.15rem 0; }
+  .money .fig { color:var(--key); font-weight:800; font-variant-numeric:tabular-nums; }
+
+  a.next {
+    display:block; text-decoration:none; color:inherit; margin-top:.9rem;
+    background:var(--chip); border-radius:.7rem; padding:.75rem .9rem; font-size:.88rem;
+  }
+  a.next b { color:var(--accent); }
+
+  .motto { text-align:center; padding:1.4rem 1.1rem; }
+  .motto p { margin:0; font-family:var(--font-serif); font-weight:900; line-height:1.6; font-size:1.1rem; }
+  .motto p.em { color:var(--key); font-size:1.3rem; margin-top:.8rem; }
+
+  .cta { background:var(--accent); color:var(--on-accent); border-radius:1.1rem; padding:1.3rem 1.15rem; text-align:center; margin-top:1.4rem; }
+  .cta p.big { font-family:var(--font-serif); font-weight:900; font-size:1.25rem; margin:0 0 .5rem; line-height:1.4; }
+  .cta p.sub { margin:0; font-size:.9rem; opacity:.92; }
+
+  footer { margin-top:2.2rem; font-size:.82rem; color:var(--ink-soft); }
+  footer .disclaim { border-top:1px solid var(--line); padding-top:.9rem; }
+  footer .handle { color:var(--accent); font-weight:700; }
+  /* 頁尾 IG 連結：圖示＋帳號，點了開 Instagram */
+  a.handle.ig { display:inline-flex; align-items:center; gap:.3em; text-decoration:none; }
+  a.handle.ig svg { width:1.1em; height:1.1em; flex:0 0 auto; }
+  a.handle.ig:hover { opacity:.8; }
+  /* 官方 LINE 諮詢卡＋頁尾 LINE 圖示（2026-10-01） */
+  .line-cta { margin-top:2rem; padding:1.1rem 1.2rem; border:1px solid var(--line); border-radius:14px;
+              display:flex; gap:.9rem; align-items:center; flex-wrap:wrap; }
+  .line-cta > svg { width:2.6rem; height:2.6rem; flex:0 0 auto; }
+  .line-cta .txt { flex:1 1 13rem; min-width:0; }
+  .line-cta .txt b { display:block; font-size:1.02rem; margin-bottom:.2rem; }
+  .line-cta .txt p { margin:0; font-size:.9rem; color:var(--ink-soft); }
+  .line-cta a.btn { background:#06C755; color:#fff; font-weight:700; padding:.6rem 1.1rem; border-radius:999px;
+                    text-decoration:none; white-space:nowrap; }
+  .line-cta a.btn:hover { opacity:.88; }
+  a.handle.line { display:inline-flex; align-items:center; gap:.3em; text-decoration:none; }
+  a.handle.line svg { width:1.1em; height:1.1em; flex:0 0 auto; }
+  a.handle.line:hover { opacity:.8; }
+</style>
+<style>
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
+  @media (max-width:30rem) { .two { grid-template-columns:1fr; } }
+  .two .col { background:var(--chip); border-radius:.8rem; padding:.8rem .9rem; font-size:.88rem; }
+  .two .col b { display:block; margin-bottom:.35rem; }
+  .two .yes b { color:var(--good); } .two .no b { color:var(--warn); }
+  .two ul { margin:0; padding-left:1.1rem; } .two li { margin:.15rem 0; }
+  table.rows { width:100%; border-collapse:collapse; font-size:.88rem; font-variant-numeric:tabular-nums; }
+  table.rows th { font-size:.74rem; color:var(--ink-soft); font-weight:600; text-align:left; padding:.3rem .25rem; border-bottom:1px solid var(--line); }
+  table.rows td { padding:.3rem .25rem; border-bottom:1px dashed var(--line); vertical-align:middle; }
+  table.rows input { width:100%; min-width:0; font:inherit; padding:.4rem .5rem; border:1px solid var(--line); border-radius:.5rem; background:var(--ground); color:var(--ink); }
+  table.rows td.n { color:var(--ink-soft); width:2.2rem; }
+  table.rows td.x { width:2rem; text-align:center; }
+  button.ghost { font:inherit; font-size:.85rem; padding:.45rem .8rem; border:1px solid var(--line); border-radius:.6rem; background:var(--surface); color:var(--ink); cursor:pointer; }
+  button.del { font:inherit; border:0; background:none; color:var(--ink-soft); cursor:pointer; font-size:1rem; }
+  .btnrow { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.7rem; }
+  .check { list-style:none; margin:0; padding:0; }
+  .check li { border-bottom:1px dashed var(--line); padding:.7rem 0; }
+  .check li:last-child { border-bottom:0; }
+  .check label { display:flex; gap:.6rem; align-items:flex-start; cursor:pointer; font-weight:700; }
+  .check input[type=checkbox] { width:1.15rem; height:1.15rem; margin-top:.3rem; accent-color:var(--accent); flex:0 0 auto; }
+  .check .where { font-size:.82rem; color:var(--ink-soft); margin:.25rem 0 0 1.75rem; }
+  .bar { height:.55rem; background:var(--chip); border-radius:99px; overflow:hidden; margin:.4rem 0 .2rem; }
+  .bar i { display:block; height:100%; width:0; background:var(--accent); transition:width .25s; }
+</style>
+<style>
+  .quick { display:flex; gap:.5rem; margin-top:.5rem; }
+  .quick button { flex:1; font:inherit; font-size:.9rem; padding:.5rem; border:1px solid var(--line); border-radius:.6rem;
+                  background:var(--surface); color:var(--ink); cursor:pointer; }
+  .quick button.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+  .yrs { display:flex; justify-content:space-between; font-size:.78rem; color:var(--ink-soft); }
+  .res { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
+  .res .col { background:var(--chip); border-radius:.8rem; padding:.8rem .85rem; }
+  .res .col .nm { font-size:.8rem; color:var(--ink-soft); font-weight:700; line-height:1.4; }
+  .res .col .big { font-family:var(--font-serif); font-weight:900; font-size:clamp(1.35rem,1.1rem + 1.4vw,1.8rem);
+                   font-variant-numeric:tabular-nums; margin:.3rem 0 .1rem; white-space:nowrap; }
+  .res .col .sm { font-size:.82rem; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .res .col.f .big { color:var(--key); }
+  .gap { text-align:center; margin-top:.9rem; font-size:.95rem; }
+  .gap b { font-family:var(--font-serif); font-size:1.3rem; color:var(--key); font-variant-numeric:tabular-nums; }
+  .inv { text-align:center; font-size:.88rem; color:var(--ink-soft); margin-bottom:.7rem; }
+  .inv b { color:var(--ink); font-variant-numeric:tabular-nums; }
+</style>
+
+<div class="watermark" aria-hidden="true"></div>
+
+<div class="wrap">
+
+  <header>
+    <h1>同樣定期定額十年<span>0050 和主動式科技基金，差了多少？</span></h1>
+  </header>
+  <p class="lede">填入你每個月想扣的金額、扣了幾年，算一次：如果過去這段時間你真的這樣扣，現在各會有多少。</p>
+
+  <div class="card">
+    <h2>回測試算</h2>
+    <div class="field">
+      <label for="amt">每個月扣多少</label>
+      <div class="row"><input id="amt" type="number" inputmode="numeric" min="1000" step="1000" value="10000"><span class="unit">元</span></div>
+      <div class="quick"><button type="button" data-v="5000">5,000</button><button type="button" data-v="10000" class="on">1 萬</button><button type="button" data-v="20000">2 萬</button></div>
+    </div>
+    <div class="field">
+      <label for="yrs">扣了幾年：<span class="rate-now" id="yrsv">10 年</span></label>
+      <input id="yrs" type="range" min="1" max="10" step="1" value="10">
+      <div class="yrs"><span>1 年</span><span>10 年</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>結果（算到 2026/10/08）</h2>
+    <p class="inv">從 <b id="from"></b> 扣到 2026/09，總共投入 <b id="tot"></b></p>
+    <div class="res">
+      <div class="col e"><div class="nm">0050</div><div class="big" id="ev"></div><div class="sm" id="eg"></div></div>
+      <div class="col f"><div class="nm">主動式台灣科技基金<br>（影片中那檔）</div><div class="big" id="fv"></div><div class="sm" id="fg"></div></div>
+    </div>
+    <p class="gap">兩者相差 <b id="gap"></b></p>
+    <details class="how"><summary>怎麼算的</summary><div class="body">
+      每月第一個交易日買進一次，用當天價格換算買到的單位數；最後全部以 2026/10/08 的價格估值。0050 用含息還原價（配息再投入），基金用每日淨值。
+      未計申購手續費、保單費用與稅。以 10 年、每月 1 萬驗算：0050 約 584 萬、基金約 1,347 萬（與影片相同）。
+    </div></details>
+  </div>
+
+  <div class="card money">
+    <span class="no">先看清楚</span>
+    <h3>這是過去，不是未來</h3>
+    <p>這段期間台灣科技股剛好大漲，主動選股的基金表現特別突出。過去績效不代表未來，換一段時間算，結果可能完全不同。</p>
+  </div>
+  <div class="card money">
+    <span class="no">也要一起看</span>
+    <h3>波動和費用</h3>
+    <p>主動式基金的波動通常比 0050 大，費用也比較高；跌的時候，你抱不抱得住，比過去賺多少更重要。</p>
+  </div>
+
+  <div class="card motto">
+    <p>看完數字，先別急著換，</p>
+    <p class="em">先想清楚這筆錢<br>多久不會用到。</p>
+  </div>
+
+  <div class="card">
+    <h2>這份試算</h2>
+    <div class="two">
+      <div class="col yes"><b>可以幫你</b><ul><li>看懂過去同樣扣法，兩者差多少</li><li>換成你自己的金額和年數算一次</li></ul></div>
+      <div class="col no"><b>沒辦法幫你</b><ul><li>預測未來報酬</li><li>判斷哪一檔適合你</li></ul></div>
+    </div>
+  </div>
+
+  <aside class="line-cta" aria-label="官方 LINE 諮詢">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#06C755"/><path fill="#fff" d="M12 5.4c-4.5 0-8.1 2.9-8.1 6.4 0 3.2 2.9 5.8 6.7 6.3.3.1.6.2.7.4.1.2.1.5 0 .8l-.1.7c0 .2-.2.8.7.4.9-.4 4.9-2.9 6.6-4.9 1.2-1.3 1.6-2.6 1.6-3.7 0-3.5-3.6-6.4-8.1-6.4z"/></svg>
+    <div class="txt">
+      <b>不確定自己適合哪一種？</b>
+      <p>加入官方 LINE，輸入「資產健檢」，我會先問你幾個小問題。</p>
+    </div>
+    <a class="btn" href="https://line.me/R/ti/p/@062buxpy" target="_blank" rel="noopener">加入官方 LINE →</a>
+  </aside>
+
+  <footer>
+    <p class="disclaim">本頁為過去資料的回測試算與一般性觀念整理，<b>不構成投資建議</b>。過去績效不代表未來，基金投資有波動與費用風險。資料來源：0050 含息還原價（Yahoo Finance）、基金淨值（鉅亨網），資料日期 2026/10/08。</p>
+    <p>本頁所有計算都在你的裝置上完成，<b>不會上傳、不會儲存任何資料</b>。</p>
+    <p><a class="handle ig" href="https://www.instagram.com/ivy_073/" target="_blank" rel="noopener" aria-label="Instagram @ivy_073"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@ivy_073</a>　<a class="handle line" href="https://line.me/R/ti/p/@062buxpy" target="_blank" rel="noopener" aria-label="官方 LINE"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#06C755"/><path fill="#fff" d="M12 5.4c-4.5 0-8.1 2.9-8.1 6.4 0 3.2 2.9 5.8 6.7 6.3.3.1.6.2.7.4.1.2.1.5 0 .8l-.1.7c0 .2-.2.8.7.4.9-.4 4.9-2.9 6.6-4.9 1.2-1.3 1.6-2.6 1.6-3.7 0-3.5-3.6-6.4-8.1-6.4z"/></svg>官方 LINE</a>　2026／10</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var wm = document.querySelector('.watermark');
+  function fillWM() {
+    if (!wm) return;
+    var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+    n = Math.min(Math.max(n, 24), 160);
+    if (wm.childElementCount === n) return;
+    wm.textContent = '';
+    for (var i = 0; i < n; i++) { var s = document.createElement('span'); s.textContent = '@ivy_073'; wm.appendChild(s); }
+  }
+  fillWM(); window.addEventListener('resize', fillWM);
+
+  var D = {"m": ["2016/10", "2016/11", "2016/12", "2017/01", "2017/02", "2017/03", "2017/04", "2017/05", "2017/06", "2017/07", "2017/08", "2017/09", "2017/10", "2017/11", "2017/12", "2018/01", "2018/02", "2018/03", "2018/04", "2018/05", "2018/06", "2018/07", "2018/08", "2018/09", "2018/10", "2018/11", "2018/12", "2019/01", "2019/02", "2019/03", "2019/04", "2019/05", "2019/06", "2019/07", "2019/08", "2019/09", "2019/10", "2019/11", "2019/12", "2020/01", "2020/02", "2020/03", "2020/04", "2020/05", "2020/06", "2020/07", "2020/08", "2020/09", "2020/10", "2020/11", "2020/12", "2021/01", "2021/02", "2021/03", "2021/04", "2021/05", "2021/06", "2021/07", "2021/08", "2021/09", "2021/10", "2021/11", "2021/12", "2022/01", "2022/02", "2022/03", "2022/04", "2022/05", "2022/06", "2022/07", "2022/08", "2022/09", "2022/10", "2022/11", "2022/12", "2023/01", "2023/02", "2023/03", "2023/04", "2023/05", "2023/06", "2023/07", "2023/08", "2023/09", "2023/10", "2023/11", "2023/12", "2024/01", "2024/02", "2024/03", "2024/04", "2024/05", "2024/06", "2024/07", "2024/08", "2024/09", "2024/10", "2024/11", "2024/12", "2025/01", "2025/02", "2025/03", "2025/04", "2025/05", "2025/06", "2025/07", "2025/08", "2025/09", "2025/10", "2025/11", "2025/12", "2026/01", "2026/02", "2026/03", "2026/04", "2026/05", "2026/06", "2026/07", "2026/08", "2026/09"], "e": [13.0587, 13.2689, 13.1592, 13.1409, 13.3237, 13.5371, 13.9675, 14.0704, 14.3885, 15.0527, 15.4369, 15.6634, 15.3803, 16.0597, 15.5879, 15.5879, 16.5029, 15.8254, 15.9221, 15.3704, 15.7479, 15.6898, 16.8162, 16.8747, 17.0504, 15.3034, 15.3815, 14.4543, 15.1237, 15.486, 16.0696, 16.7035, 15.808, 16.6331, 16.704, 16.6228, 17.4448, 18.2871, 18.6829, 19.8195, 18.6613, 18.3051, 15.9056, 17.3935, 17.7916, 18.9652, 21.5304, 21.8154, 21.752, 21.8259, 24.1267, 26.2481, 28.2005, 28.7829, 29.2789, 29.8181, 29.6995, 29.8289, 29.8187, 30.489, 28.9646, 29.516, 30.3377, 31.6567, 31.445, 31.0362, 30.2628, 28.2409, 28.5392, 24.65, 26.4095, 25.899, 22.9863, 22.4015, 26.6187, 24.9093, 27.3674, 27.4479, 27.8273, 27.0684, 28.7817, 30.0581, 30.2054, 29.3771, 28.9921, 28.4087, 30.7538, 31.4771, 32.0798, 34.0975, 37.5836, 37.2851, 40.4848, 44.5559, 44.1596, 43.4036, 44.0636, 45.7196, 46.0076, 46.5716, 46.8868, 45.7554, 42.8964, 42.2151, 42.7991, 47.3394, 50.084, 50.9661, 56.9449, 62.8746, 60.2773, 65.6189, 71.0675, 79.864, 74.9936, 94.0278, 104.8619, 108.6886, 102.0, 108.45], "f": [29.6, 28.77, 28.14, 29.14, 30.03, 31.13, 31.99, 31.93, 32.26, 33.24, 35.34, 36.33, 39.2, 41.4, 41.33, 41.25, 42.89, 43.03, 45.45, 44.02, 48.5, 49.39, 49.46, 47.63, 44.99, 38.84, 43, 41.07, 44.23, 46.88, 48.2, 50.12, 46.37, 50.81, 53.44, 56.76, 55.72, 59.93, 60.18, 65.18, 61.11, 62.83, 51.11, 58.09, 63.31, 68.89, 76.01, 75.83, 74.27, 73.45, 83, 89.06, 90.47, 97.83, 102, 106.33, 102.11, 107.52, 120.62, 122.88, 119.08, 139.11, 139.09, 146.01, 131.24, 142.09, 136.81, 118.02, 122.75, 99.42, 103.17, 106.12, 95.61, 95.09, 110.94, 102.57, 111.35, 118.71, 121.62, 119.75, 130.24, 145.03, 152.67, 156.49, 161.31, 151.16, 167.45, 169.89, 182.91, 197.76, 196.93, 192.61, 202.83, 219.84, 209.23, 214.45, 211.59, 217.13, 218.8, 222.17, 216.19, 215.89, 192.3, 190.04, 200.79, 222.56, 236.42, 259.09, 282.92, 332.97, 341.28, 392.01, 441.5, 485.27, 519.19, 722.31, 813.86, 847.36, 690.54, 790.85], "ev": 114.95, "fv": 855.59};
+  var amt = document.getElementById('amt'), yrs = document.getElementById('yrs');
+  function wan(x) { return x >= 10000 ? (Math.round(x / 1000) / 10).toLocaleString('zh-TW') + ' 萬' : Math.round(x).toLocaleString('zh-TW') + ' 元'; }
+  function calc() {
+    var a = Math.max(0, +amt.value || 0), n = +yrs.value, k = n * 12, st = 120 - k, ue = 0, uf = 0;
+    for (var i = st; i < 120; i++) { ue += a / D.e[i]; uf += a / D.f[i]; }
+    var tot = a * k, ve = ue * D.ev, vf = uf * D.fv;
+    document.getElementById('yrsv').textContent = n + ' 年';
+    document.getElementById('from').textContent = D.m[st];
+    document.getElementById('tot').textContent = wan(tot);
+    document.getElementById('ev').textContent = wan(ve);
+    document.getElementById('fv').textContent = wan(vf);
+    document.getElementById('eg').textContent = '賺 ' + wan(ve - tot);
+    document.getElementById('fg').textContent = '賺 ' + wan(vf - tot);
+    document.getElementById('gap').textContent = wan(Math.abs(vf - ve));
+  }
+  document.querySelectorAll('.quick button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      amt.value = b.dataset.v;
+      document.querySelectorAll('.quick button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      calc();
+    });
+  });
+  amt.addEventListener('input', function () {
+    document.querySelectorAll('.quick button').forEach(function (x) { x.classList.toggle('on', x.dataset.v === amt.value); });
+    calc();
+  });
+  yrs.addEventListener('input', calc);
+  calc();
+})();
+</script>
