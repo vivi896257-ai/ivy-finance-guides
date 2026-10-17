@@ -1,0 +1,417 @@
+<title>存到 100 萬之後呢？</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票，與各懶人包內頁同一套 ── */
+  :root {
+    --ground:#F3F1E4; --surface:#FCFDF5; --chip:#E9E6DB; --line:#DEDACD;
+    --ink:#1A1A16; --ink-soft:#6C6860; --accent:#B86048; --key:#C9603F;
+    --good:#4EA86C; --warn:#C65842; --on-accent:#FFF0E1;
+    --shadow: 0 2px 10px rgba(26,26,22,.07), 0 8px 28px rgba(26,26,22,.05);
+    --wm-color:#1A1A16; --wm-alpha:.075;
+    --font-sans: "Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    --font-serif: "Noto Serif TC","Songti TC","PingFang TC",serif;
+    --step: clamp(.9rem,.86rem + .2vw,1rem);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+      --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+      --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+      --wm-color:#F1EEE2; --wm-alpha:.06;
+      --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+    --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+    --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+    --wm-color:#F1EEE2; --wm-alpha:.06;
+    --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--font-sans); font-size:var(--step);
+    line-height:1.7; -webkit-text-size-adjust:100%;
+  }
+  .watermark {
+    position:fixed; inset:-25%; z-index:0; pointer-events:none; user-select:none;
+    display:flex; flex-wrap:wrap; align-content:center; justify-content:center;
+    gap:3.4rem 3.2rem; transform:rotate(-24deg);
+    font-family:var(--font-serif); font-weight:900; font-size:1.05rem;
+    letter-spacing:.1em; color:var(--wm-color); opacity:var(--wm-alpha); white-space:nowrap;
+  }
+  .wrap { position:relative; z-index:1; max-width:34rem; margin:0 auto; padding:2.2rem 1.15rem 3.5rem; }
+
+  a.back { display:inline-block; color:var(--ink-soft); text-decoration:none; font-size:.85rem; margin-bottom:1.2rem; }
+  a.back:hover { color:var(--accent); }
+
+  header h1 {
+    font-family:var(--font-serif); font-weight:900; line-height:1.25;
+    font-size:clamp(1.7rem,1.3rem + 2vw,2.3rem); margin:0 0 .5rem;
+  }
+  header h1 span { display:block; font-size:.5em; color:var(--accent); letter-spacing:.04em; margin-top:.5rem; }
+  .lede { color:var(--ink-soft); margin:0 0 1.6rem; font-size:.95rem; }
+
+  .card {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:1.1rem; box-shadow:var(--shadow);
+    padding:1.15rem 1.15rem 1.3rem; margin-bottom:1.15rem;
+  }
+  .card > h2 {
+    font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 .9rem; font-weight:700;
+  }
+
+  .field { margin-bottom:1rem; }
+  .field:last-child { margin-bottom:0; }
+  .field label { display:block; font-size:.9rem; font-weight:600; margin-bottom:.3rem; }
+  .field .hint { display:block; font-size:.78rem; color:var(--ink-soft); font-weight:400; margin-top:.15rem; line-height:1.5; }
+  .field .row { display:flex; align-items:center; gap:.5rem; margin-top:.4rem; }
+  .field input[type=number] {
+    flex:1 1 auto; width:100%; min-width:0; font:inherit; font-variant-numeric:tabular-nums;
+    padding:.55rem .7rem; border:1px solid var(--line); border-radius:.6rem;
+    background:var(--ground); color:var(--ink);
+  }
+  .field input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .unit { flex:0 0 auto; color:var(--ink-soft); font-size:.85rem; }
+
+  input[type=range] { width:100%; accent-color:var(--accent); margin-top:.5rem; }
+  .rate-now { font-weight:700; color:var(--key); font-variant-numeric:tabular-nums; }
+
+  button.go {
+    width:100%; font:inherit; font-weight:700; font-size:1.02rem;
+    padding:.85rem 1rem; border:0; border-radius:.8rem;
+    background:var(--accent); color:var(--on-accent); cursor:pointer;
+  }
+  button.go:active { transform:translateY(1px); }
+
+  #out { display:none; }
+  #out.on { display:block; }
+
+  .big-num {
+    font-family:var(--font-serif); font-weight:900;
+    font-size:clamp(2.1rem,1.4rem + 3.4vw,3.1rem);
+    line-height:1.12; color:var(--key); margin:.2rem 0 .1rem;
+    font-variant-numeric:tabular-nums;
+  }
+  .big-cap { font-size:.8rem; letter-spacing:.1em; color:var(--ink-soft); margin:0; }
+  .big-sub { font-size:.9rem; color:var(--ink-soft); margin-top:.55rem; }
+
+  table.bd { width:100%; border-collapse:collapse; font-size:.9rem; font-variant-numeric:tabular-nums; }
+  table.bd th { text-align:left; font-size:.76rem; letter-spacing:.06em; color:var(--ink-soft); padding:.35rem 0; border-bottom:1px solid var(--line); font-weight:600; }
+  table.bd th:last-child, table.bd td:last-child { text-align:right; }
+  table.bd td { padding:.45rem 0; border-bottom:1px dashed var(--line); }
+  table.bd tr:last-child td { border-bottom:0; }
+  table.bd td:last-child { white-space:nowrap; font-weight:600; }
+  table.bd tr.hi td { color:var(--key); font-weight:800; }
+
+  details.how { margin-top:.9rem; border-top:1px solid var(--line); padding-top:.7rem; }
+  details.how summary { cursor:pointer; font-size:.82rem; color:var(--accent); font-weight:600; list-style:none; }
+  details.how summary::-webkit-details-marker { display:none; }
+  details.how summary::before { content:"▸ "; }
+  details.how[open] summary::before { content:"▾ "; }
+  details.how .body { font-size:.85rem; color:var(--ink-soft); margin-top:.55rem; }
+  details.how code {
+    display:block; background:var(--chip); border-radius:.45rem;
+    padding:.5rem .6rem; margin:.45rem 0; font-size:.82rem;
+    font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;
+    color:var(--ink); overflow-x:auto; white-space:pre-wrap;
+  }
+
+  .note { background:var(--chip); border-radius:.7rem; padding:.7rem .85rem; font-size:.84rem; color:var(--ink-soft); margin-top:.9rem; }
+  .note b { color:var(--ink); }
+
+  .cta { background:var(--accent); color:var(--on-accent); border-radius:1.1rem; padding:1.3rem 1.15rem; text-align:center; margin-top:1.4rem; }
+  .cta p.big { font-family:var(--font-serif); font-weight:900; font-size:1.25rem; margin:0 0 .5rem; line-height:1.4; }
+  .cta p.sub { margin:0; font-size:.9rem; opacity:.92; }
+
+  footer { margin-top:2.2rem; font-size:.82rem; color:var(--ink-soft); }
+  footer .disclaim { border-top:1px solid var(--line); padding-top:.9rem; }
+  footer .handle { color:var(--accent); font-weight:700; }
+  /* 頁尾 IG 連結：圖示＋帳號，點了開 Instagram */
+  a.handle.ig { display:inline-flex; align-items:center; gap:.3em; text-decoration:none; }
+  a.handle.ig svg { width:1.1em; height:1.1em; flex:0 0 auto; }
+  a.handle.ig:hover { opacity:.8; }
+  /* 官方 LINE 諮詢卡＋頁尾 LINE 圖示（2026-10-01） */
+  .line-cta { margin-top:2rem; padding:1.1rem 1.2rem; border:1px solid var(--line); border-radius:14px;
+              display:flex; gap:.9rem; align-items:center; flex-wrap:wrap; }
+  .line-cta > svg { width:2.6rem; height:2.6rem; flex:0 0 auto; }
+  .line-cta .txt { flex:1 1 13rem; min-width:0; }
+  .line-cta .txt b { display:block; font-size:1.02rem; margin-bottom:.2rem; }
+  .line-cta .txt p { margin:0; font-size:.9rem; color:var(--ink-soft); }
+  .line-cta a.btn { background:#06C755; color:#fff; font-weight:700; padding:.6rem 1.1rem; border-radius:999px;
+                    text-decoration:none; white-space:nowrap; }
+  .line-cta a.btn:hover { opacity:.88; }
+  a.handle.line { display:inline-flex; align-items:center; gap:.3em; text-decoration:none; }
+  a.handle.line svg { width:1.1em; height:1.1em; flex:0 0 auto; }
+  a.handle.line:hover { opacity:.8; }
+
+  /* v44 專用：選項按鈕、結果框 */
+  .chips { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.4rem; }
+  .chips label { cursor:pointer; }
+  .chips input { position:absolute; opacity:0; pointer-events:none; }
+  .chips span { display:inline-block; padding:.45rem .9rem; border-radius:999px; border:1px solid var(--line);
+                background:var(--ground); font-size:.9rem; }
+  .chips input:checked + span { background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:700; }
+  .result { background:var(--chip); border-radius:.8rem; padding:.85rem .95rem; margin-top:1rem; font-size:.92rem; }
+  .result b.tag { display:inline-block; color:var(--key); font-weight:800; margin-bottom:.25rem; }
+  .result .num { font-family:var(--font-serif); font-weight:900; font-size:1.6rem; color:var(--key); }
+  ol.qs { margin:.3rem 0 0; padding-left:1.3rem; }
+  ol.qs li { margin:.35rem 0; }
+  ul.uses { list-style:none; margin:.3rem 0 0; padding:0; }
+  ul.uses li { padding:.55rem 0; border-bottom:1px dashed var(--line); }
+  ul.uses li:last-child { border-bottom:0; }
+  ul.uses li b { color:var(--key); }
+  .twobox { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+  .twobox div { background:var(--chip); border-radius:.7rem; padding:.7rem .75rem; font-size:.86rem; }
+  .twobox div b { display:block; font-size:.78rem; letter-spacing:.06em; color:var(--accent); margin-bottom:.25rem; }
+</style>
+<div class="watermark" aria-hidden="true"></div>
+<div class="wrap">
+
+  <header>
+    <h1>存到 100 萬之後呢？<span>0050 是工具，不是目標</span></h1>
+  </header>
+  <p class="lede">
+    很多人每個月扣 0050，扣了好幾年，卻答不出「這筆錢要拿來做什麼」。
+    先回答下面三件事，你就知道該存到多少、什麼時候要調整、存到之後怎麼用。
+  </p>
+
+  <div class="card">
+    <h2>① 這筆錢要拿來做什麼？</h2>
+    <div class="field">
+      <label>選一個</label>
+      <div class="chips">
+        <label><input type="radio" name="goal" value="house" checked><span>買房</span></label>
+        <label><input type="radio" name="goal" value="retire"><span>退休</span></label>
+        <label><input type="radio" name="goal" value="edu"><span>孩子教育金</span></label>
+        <label><input type="radio" name="goal" value="none"><span>還沒想好</span></label>
+      </div>
+    </div>
+    <div class="field" id="yrsField">
+      <label for="yrs">大概幾年後要用到？</label>
+      <div class="row"><input type="number" id="yrs" value="10" min="1" max="50"><span class="unit">年</span></div>
+    </div>
+    <div class="result" id="useResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>② 你要存到多少？（試算）</h2>
+    <div class="field">
+      <label for="target">目標金額</label>
+      <div class="row"><input type="number" id="target" value="3000000" min="0" step="100000"><span class="unit">元</span></div>
+    </div>
+    <div class="field">
+      <label for="have">現在已經存了</label>
+      <div class="row"><input type="number" id="have" value="1000000" min="0" step="100000"><span class="unit">元</span></div>
+    </div>
+    <div class="field">
+      <label for="monthly">每個月投入</label>
+      <div class="row"><input type="number" id="monthly" value="10000" min="0" step="1000"><span class="unit">元</span></div>
+    </div>
+    <div class="field">
+      <label for="rate">年報酬假設　<span class="rate-now" id="rateNow">6.0%</span>
+        <span class="hint">報酬率只是試算假設，不是預期報酬，也不保證</span>
+      </label>
+      <input type="range" id="rate" min="1" max="10" step="0.5" value="6">
+    </div>
+    <button class="go" id="calc">算出我的數字</button>
+    <div id="out">
+      <div class="result">
+        <b class="tag">照現在的速度</b><br>
+        大約 <span class="num" id="yearsTo">—</span> 會到目標
+      </div>
+      <div class="result" id="needBox">
+        <b class="tag">如果要在 <span id="yrsLbl">—</span> 年內達成</b><br>
+        每個月要投入 <span class="num" id="needMonthly">—</span>
+      </div>
+      <table class="bd" style="margin-top:1rem">
+        <thead><tr><th>報酬假設差 2%</th><th>達成時間</th></tr></thead>
+        <tbody id="rateTable"></tbody>
+      </table>
+      <details class="how">
+        <summary>這個數字怎麼算</summary>
+        <div class="body">
+          已經存的錢跟每月投入一起按月複利，算到哪一個月超過目標：
+          <code>每月資產 ＝ 上月資產 × (1 + r/12) ＋ 每月投入</code>
+          要在 n 年內達成的每月投入，用年金公式反推：
+          <code>每月要存 ＝ (目標 − 現有 × (1 + r/12)^(12n)) × (r/12) ÷ [ (1 + r/12)^(12n) − 1 ]</code>
+          r ＝ 你拉的年報酬假設。
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>③ 漲多了，什麼時候該調整？</h2>
+    <p style="margin:0 0 .4rem">不是看 0050 漲了多少，是看<b>你什麼時候要用這筆錢</b>。三個問題問自己：</p>
+    <ol class="qs">
+      <li>離用這筆錢，還剩幾年？</li>
+      <li>如果用錢前一年市場剛好大跌，我可以晚一點再用嗎？</li>
+      <li>這筆錢有沒有別的來源可以替代？</li>
+    </ol>
+    <div class="note"><b>三題裡有兩題答得出「不行」</b>：代表這筆錢需要開始規劃，不能只靠一直扣下去。</div>
+  </div>
+
+  <div class="card">
+    <h2>④ 存到之後，怎麼用？</h2>
+    <p style="margin:0 0 .3rem">一筆錢存到之後，可以分成三種用途來想：</p>
+    <ul class="uses">
+      <li><b>繼續長期成長</b>　還不需要動用的部分</li>
+      <li><b>規劃現金流</b>　要開始支付生活的部分</li>
+      <li><b>生活預備金</b>　臨時要用、不能虧損的部分</li>
+    </ul>
+    <p style="margin:1rem 0 .3rem"><b>現金流不是領越多越好</b>，要看三件事：</p>
+    <ol class="qs">
+      <li>配發的錢從哪裡來</li>
+      <li>資產本身的波動有多大</li>
+      <li>本金能撐多久 ↓</li>
+    </ol>
+    <div class="field" style="margin-top:1rem">
+      <label for="pool">本金</label>
+      <div class="row"><input type="number" id="pool" value="5000000" min="0" step="100000"><span class="unit">元</span></div>
+    </div>
+    <div class="field">
+      <label for="draw">每個月要領</label>
+      <div class="row"><input type="number" id="draw" value="30000" min="0" step="1000"><span class="unit">元</span></div>
+    </div>
+    <div class="field">
+      <label for="rate2">年報酬假設　<span class="rate-now" id="rate2Now">4.0%</span>
+        <span class="hint">報酬率只是試算假設，不是預期報酬，也不保證</span>
+      </label>
+      <input type="range" id="rate2" min="0" max="10" step="0.5" value="4">
+    </div>
+    <div class="result" id="lastResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>這份懶人包</h2>
+    <div class="twobox">
+      <div><b>解決什麼</b>算出你的目標金額、達成時間、本金能撐幾年</div>
+      <div><b>不解決什麼</b>不告訴你該怎麼配置、該買哪一檔</div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <p class="big">你已經有自己的數字了。</p>
+    <p class="sub">
+      三種用途要怎麼分、什麼時候開始調整，<br>
+      每個人的答案都不一樣。<br>
+      加 LINE，我帶你看你的數字。
+    </p>
+  </div>
+
+  <aside class="line-cta" aria-label="官方 LINE 諮詢">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#06C755"/><path fill="#fff" d="M12 5.4c-4.5 0-8.1 2.9-8.1 6.4 0 3.2 2.9 5.8 6.7 6.3.3.1.6.2.7.4.1.2.1.5 0 .8l-.1.7c0 .2-.2.8.7.4.9-.4 4.9-2.9 6.6-4.9 1.2-1.3 1.6-2.6 1.6-3.7 0-3.5-3.6-6.4-8.1-6.4z"/></svg>
+    <div class="txt">
+      <b>想把自己的狀況算清楚？</b>
+      <p>加入官方 LINE，輸入「諮詢」，我會先問你幾個小問題。</p>
+    </div>
+    <a class="btn" href="https://line.me/R/ti/p/@062buxpy" target="_blank" rel="noopener">加入官方 LINE →</a>
+  </aside>
+
+  <footer>
+    <p class="disclaim">
+      本頁為試算工具，<b>不構成投資建議</b>；所有報酬率皆為你自行輸入的假設值，過去績效不代表未來。
+    </p>
+    <p>本頁所有計算都在你的裝置上完成，<b>不會上傳、不會儲存任何資料</b>。</p>
+    <p><a class="handle ig" href="https://www.instagram.com/ivy_073/" target="_blank" rel="noopener" aria-label="Instagram @ivy_073"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@ivy_073</a>　<a class="handle line" href="https://line.me/R/ti/p/@062buxpy" target="_blank" rel="noopener" aria-label="官方 LINE"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#06C755"/><path fill="#fff" d="M12 5.4c-4.5 0-8.1 2.9-8.1 6.4 0 3.2 2.9 5.8 6.7 6.3.3.1.6.2.7.4.1.2.1.5 0 .8l-.1.7c0 .2-.2.8.7.4.9-.4 4.9-2.9 6.6-4.9 1.2-1.3 1.6-2.6 1.6-3.7 0-3.5-3.6-6.4-8.1-6.4z"/></svg>官方 LINE</a>　2026／10</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var wm = document.querySelector('.watermark');
+  function fillWM() {
+    if (!wm) return;
+    var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+    n = Math.min(Math.max(n, 24), 160);
+    if (wm.childElementCount === n) return;
+    wm.textContent = '';
+    for (var i = 0; i < n; i++) { var s = document.createElement('span'); s.textContent = '@ivy_073'; wm.appendChild(s); }
+  }
+  fillWM(); window.addEventListener('resize', fillWM);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var num = function (id) { var v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+  function money(v) { return Math.round(v).toLocaleString('zh-TW') + ' 元'; }
+  function yrsTxt(m) {
+    if (m === Infinity) return '超過 60 年';
+    if (m === 0) return '已經達成';
+    var y = Math.floor(m / 12), r = m % 12;
+    return (y > 0 ? y + ' 年' : '') + (r > 0 ? (y > 0 ? ' ' : '') + r + ' 個月' : '');
+  }
+
+  // ① 用途 × 年數
+  var TXT = {
+    short: '<b class="tag">5 年內要用的錢</b><br>這是快要用到的錢。最該問自己的是：「如果明年剛好大跌三成，我等得起嗎？」',
+    mid:   '<b class="tag">5–15 年後要用的錢</b><br>中期的錢，離用錢那年越近，越要開始想「部分資產要不要轉到波動比較小的地方」。',
+    long:  '<b class="tag">15 年以上才用的錢</b><br>長期的錢，現在先想「要怎麼累積」，比「要不要賣」重要。',
+    none:  '<b class="tag">還沒想好</b><br>先不用急著決定賣不賣。沒有目的的錢，最容易漲了亂賣、跌了亂停。'
+  };
+  function goal() { var c = document.querySelector('input[name=goal]:checked'); return c ? c.value : 'house'; }
+  function showUse() {
+    var g = goal(), y = num('yrs');
+    $('yrsField').style.display = g === 'none' ? 'none' : '';
+    $('useResult').innerHTML = g === 'none' ? TXT.none : (y < 5 ? TXT.short : (y <= 15 ? TXT.mid : TXT.long));
+  }
+
+  // ② 存到目標
+  function monthsTo(target, have, mon, ratePct) {
+    var i = ratePct / 100 / 12, a = have;
+    if (a >= target) return 0;
+    for (var m = 1; m <= 720; m++) { a = a * (1 + i) + mon; if (a >= target) return m; }
+    return Infinity;
+  }
+  function needMonthly(target, have, ratePct, yrs) {
+    var i = ratePct / 100 / 12, N = Math.max(Math.round(yrs * 12), 1);
+    var gap = target - have * Math.pow(1 + i, N);
+    if (gap <= 0) return 0;
+    return i === 0 ? gap / N : gap * i / (Math.pow(1 + i, N) - 1);
+  }
+  var rateEl = $('rate');
+  function showRate() { $('rateNow').textContent = parseFloat(rateEl.value).toFixed(1) + '%'; }
+  function calc() {
+    var t = num('target'), h = num('have'), mo = num('monthly'), r = parseFloat(rateEl.value), y = num('yrs');
+    $('yearsTo').textContent = yrsTxt(monthsTo(t, h, mo, r));
+    if (goal() === 'none') { $('needBox').style.display = 'none'; }
+    else {
+      $('needBox').style.display = '';
+      $('yrsLbl').textContent = y;
+      $('needMonthly').textContent = money(needMonthly(t, h, r, y));
+    }
+    var list = [r - 2, r, r + 2].filter(function (x) { return x >= 0; });
+    $('rateTable').innerHTML = list.map(function (x) {
+      return '<tr' + (x === r ? ' class="hi"' : '') + '><td>' + x.toFixed(1) + '%</td><td>' + yrsTxt(monthsTo(t, h, mo, x)) + '</td></tr>';
+    }).join('');
+    $('out').classList.add('on');
+  }
+  function recalc() { if ($('out').classList.contains('on')) calc(); }
+  Array.prototype.forEach.call(document.querySelectorAll('input[name=goal]'), function (el) {
+    el.addEventListener('change', function () { showUse(); recalc(); });
+  });
+  $('yrs').addEventListener('input', function () { showUse(); recalc(); });
+  rateEl.addEventListener('input', function () { showRate(); recalc(); });
+  ['target', 'have', 'monthly'].forEach(function (id) { $(id).addEventListener('input', recalc); });
+  $('calc').addEventListener('click', function () { calc(); $('out').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  showUse(); showRate();
+
+  // ④ 本金能撐多久
+  var r2 = $('rate2');
+  function last() {
+    $('rate2Now').textContent = parseFloat(r2.value).toFixed(1) + '%';
+    var p = num('pool'), d = num('draw'), i = parseFloat(r2.value) / 100 / 12, a = p, m = 0;
+    if (d <= 0) { $('lastResult').innerHTML = '每月領 0 元，本金不會減少。'; return; }
+    while (a > 0 && m < 1200) { a = a * (1 + i) - d; m++; }
+    $('lastResult').innerHTML = m >= 1200
+      ? '<b class="tag">照這個假設</b><br>本金大約<b>領不完</b>：每月領的錢，比假設報酬生出來的還少。'
+      : '<b class="tag">照這個假設</b><br>本金大約可以撐 <span class="num">' + yrsTxt(m) + '</span>';
+  }
+  ['pool', 'draw'].forEach(function (id) { $(id).addEventListener('input', last); });
+  r2.addEventListener('input', last);
+  last();
+})();
+</script>
