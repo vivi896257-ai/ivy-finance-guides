@@ -1,0 +1,325 @@
+<title>儲蓄險領給誰對照表</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ── 沿用 Ivy 圖卡系統色票，與各懶人包內頁同一套 ── */
+  :root {
+    --ground:#F3F1E4; --surface:#FCFDF5; --chip:#E9E6DB; --line:#DEDACD;
+    --ink:#1A1A16; --ink-soft:#6C6860; --accent:#B86048; --key:#C9603F;
+    --good:#4EA86C; --warn:#C65842; --on-accent:#FFF0E1;
+    --shadow: 0 2px 10px rgba(26,26,22,.07), 0 8px 28px rgba(26,26,22,.05);
+    --wm-color:#1A1A16; --wm-alpha:.075;
+    --font-sans: "Noto Sans TC","PingFang TC","Hiragino Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    --font-serif: "Noto Serif TC","Songti TC","PingFang TC",serif;
+    --step: clamp(.9rem,.86rem + .2vw,1rem);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+      --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+      --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+      --wm-color:#F1EEE2; --wm-alpha:.06;
+      --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#16150F; --surface:#211F17; --chip:#2C2920; --line:#343126;
+    --ink:#F1EEE2; --ink-soft:#A29C8E; --accent:#D9805F; --key:#E08B62;
+    --good:#6DC48D; --warn:#E0765C; --on-accent:#221009;
+    --wm-color:#F1EEE2; --wm-alpha:.06;
+    --shadow: 0 2px 10px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--font-sans); font-size:var(--step);
+    line-height:1.7; -webkit-text-size-adjust:100%;
+  }
+  .watermark {
+    position:fixed; inset:-25%; z-index:0; pointer-events:none; user-select:none;
+    display:flex; flex-wrap:wrap; align-content:center; justify-content:center;
+    gap:3.4rem 3.2rem; transform:rotate(-24deg);
+    font-family:var(--font-serif); font-weight:900; font-size:1.05rem;
+    letter-spacing:.1em; color:var(--wm-color); opacity:var(--wm-alpha); white-space:nowrap;
+  }
+  .wrap { position:relative; z-index:1; max-width:34rem; margin:0 auto; padding:2.2rem 1.15rem 3.5rem; }
+
+  a.back { display:inline-block; color:var(--ink-soft); text-decoration:none; font-size:.85rem; margin-bottom:1.2rem; }
+  a.back:hover { color:var(--accent); }
+
+  header h1 {
+    font-family:var(--font-serif); font-weight:900; line-height:1.25;
+    font-size:clamp(1.7rem,1.3rem + 2vw,2.3rem); margin:0 0 .5rem;
+  }
+  header h1 span { display:block; font-size:.5em; color:var(--accent); letter-spacing:.04em; margin-top:.5rem; }
+  .lede { color:var(--ink-soft); margin:0 0 1.6rem; font-size:.95rem; }
+
+  .card {
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:1.1rem; box-shadow:var(--shadow);
+    padding:1.15rem 1.15rem 1.3rem; margin-bottom:1.15rem;
+  }
+  .card > h2 {
+    font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 .9rem; font-weight:700;
+  }
+
+  .field { margin-bottom:1rem; }
+  .field:last-child { margin-bottom:0; }
+  .field label { display:block; font-size:.9rem; font-weight:600; margin-bottom:.3rem; }
+  .field .hint { display:block; font-size:.78rem; color:var(--ink-soft); font-weight:400; margin-top:.15rem; line-height:1.5; }
+  .field .row { display:flex; align-items:center; gap:.5rem; margin-top:.4rem; }
+  .field input[type=number] {
+    flex:1 1 auto; width:100%; min-width:0; font:inherit; font-variant-numeric:tabular-nums;
+    padding:.55rem .7rem; border:1px solid var(--line); border-radius:.6rem;
+    background:var(--ground); color:var(--ink);
+  }
+  .field input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .unit { flex:0 0 auto; color:var(--ink-soft); font-size:.85rem; }
+
+  input[type=range] { width:100%; accent-color:var(--accent); margin-top:.5rem; }
+  .rate-now { font-weight:700; color:var(--key); font-variant-numeric:tabular-nums; }
+
+  button.go {
+    width:100%; font:inherit; font-weight:700; font-size:1.02rem;
+    padding:.85rem 1rem; border:0; border-radius:.8rem;
+    background:var(--accent); color:var(--on-accent); cursor:pointer;
+  }
+  button.go:active { transform:translateY(1px); }
+
+  #out { display:none; }
+  #out.on { display:block; }
+
+  .big-num {
+    font-family:var(--font-serif); font-weight:900;
+    font-size:clamp(2.1rem,1.4rem + 3.4vw,3.1rem);
+    line-height:1.12; color:var(--key); margin:.2rem 0 .1rem;
+    font-variant-numeric:tabular-nums;
+  }
+  .big-cap { font-size:.8rem; letter-spacing:.1em; color:var(--ink-soft); margin:0; }
+  .big-sub { font-size:.9rem; color:var(--ink-soft); margin-top:.55rem; }
+
+  table.bd { width:100%; border-collapse:collapse; font-size:.9rem; font-variant-numeric:tabular-nums; }
+  table.bd th { text-align:left; font-size:.76rem; letter-spacing:.06em; color:var(--ink-soft); padding:.35rem 0; border-bottom:1px solid var(--line); font-weight:600; }
+  table.bd th:last-child, table.bd td:last-child { text-align:right; }
+  table.bd td { padding:.45rem 0; border-bottom:1px dashed var(--line); }
+  table.bd tr:last-child td { border-bottom:0; }
+  table.bd td:last-child { white-space:nowrap; font-weight:600; }
+  table.bd tr.hi td { color:var(--key); font-weight:800; }
+
+  details.how { margin-top:.9rem; border-top:1px solid var(--line); padding-top:.7rem; }
+  details.how summary { cursor:pointer; font-size:.82rem; color:var(--accent); font-weight:600; list-style:none; }
+  details.how summary::-webkit-details-marker { display:none; }
+  details.how summary::before { content:"▸ "; }
+  details.how[open] summary::before { content:"▾ "; }
+  details.how .body { font-size:.85rem; color:var(--ink-soft); margin-top:.55rem; }
+  details.how code {
+    display:block; background:var(--chip); border-radius:.45rem;
+    padding:.5rem .6rem; margin:.45rem 0; font-size:.82rem;
+    font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;
+    color:var(--ink); overflow-x:auto; white-space:pre-wrap;
+  }
+
+  .note { background:var(--chip); border-radius:.7rem; padding:.7rem .85rem; font-size:.84rem; color:var(--ink-soft); margin-top:.9rem; }
+  .note b { color:var(--ink); }
+
+  .cta { background:var(--accent); color:var(--on-accent); border-radius:1.1rem; padding:1.3rem 1.15rem; text-align:center; margin-top:1.4rem; }
+  .cta p.big { font-family:var(--font-serif); font-weight:900; font-size:1.25rem; margin:0 0 .5rem; line-height:1.4; }
+  .cta p.sub { margin:0; font-size:.9rem; opacity:.92; }
+
+  footer { margin-top:2.2rem; font-size:.82rem; color:var(--ink-soft); }
+  footer .disclaim { border-top:1px solid var(--line); padding-top:.9rem; }
+  footer .handle { color:var(--accent); font-weight:700; }
+  /* 頁尾 IG 連結：圖示＋帳號，點了開 Instagram */
+  a.handle.ig { display:inline-flex; align-items:center; gap:.3em; text-decoration:none; }
+  a.handle.ig svg { width:1.1em; height:1.1em; flex:0 0 auto; }
+  a.handle.ig:hover { opacity:.8; }
+  /* 官方 LINE 諮詢卡＋頁尾 LINE 圖示（2026-10-01） */
+  .line-cta { margin-top:2rem; padding:1.1rem 1.2rem; border:1px solid var(--line); border-radius:14px;
+              display:flex; gap:.9rem; align-items:center; flex-wrap:wrap; }
+  .line-cta > svg { width:2.6rem; height:2.6rem; flex:0 0 auto; }
+  .line-cta .txt { flex:1 1 13rem; min-width:0; }
+  .line-cta .txt b { display:block; font-size:1.02rem; margin-bottom:.2rem; }
+  .line-cta .txt p { margin:0; font-size:.9rem; color:var(--ink-soft); }
+  .line-cta a.btn { background:#06C755; color:#fff; font-weight:700; padding:.6rem 1.1rem; border-radius:999px;
+                    text-decoration:none; white-space:nowrap; }
+  .line-cta a.btn:hover { opacity:.88; }
+  a.handle.line { display:inline-flex; align-items:center; gap:.3em; text-decoration:none; }
+  a.handle.line svg { width:1.1em; height:1.1em; flex:0 0 auto; }
+  a.handle.line:hover { opacity:.8; }
+
+  /* v44 專用：選項按鈕、結果框 */
+  .chips { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.4rem; }
+  .chips label { cursor:pointer; }
+  .chips input { position:absolute; opacity:0; pointer-events:none; }
+  .chips span { display:inline-block; padding:.45rem .9rem; border-radius:999px; border:1px solid var(--line);
+                background:var(--ground); font-size:.9rem; }
+  .chips input:checked + span { background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:700; }
+  .result { background:var(--chip); border-radius:.8rem; padding:.85rem .95rem; margin-top:1rem; font-size:.92rem; }
+  .result b.tag { display:inline-block; color:var(--key); font-weight:800; margin-bottom:.25rem; }
+  .result .num { font-family:var(--font-serif); font-weight:900; font-size:1.6rem; color:var(--key); }
+  ol.qs { margin:.3rem 0 0; padding-left:1.3rem; }
+  ol.qs li { margin:.35rem 0; }
+  ul.uses { list-style:none; margin:.3rem 0 0; padding:0; }
+  ul.uses li { padding:.55rem 0; border-bottom:1px dashed var(--line); }
+  ul.uses li:last-child { border-bottom:0; }
+  ul.uses li b { color:var(--key); }
+  .twobox { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+  .twobox div { background:var(--chip); border-radius:.7rem; padding:.7rem .75rem; font-size:.86rem; }
+  .twobox div b { display:block; font-size:.78rem; letter-spacing:.06em; color:var(--accent); margin-bottom:.25rem; }
+
+  /* 2026-10-21 五頁共用：部位表、比例條、選擇題 */
+  table.hold { width:100%; border-collapse:collapse; font-size:.84rem; }
+  table.hold th { text-align:left; font-size:.72rem; color:var(--ink-soft); font-weight:600; padding:.2rem .15rem; }
+  table.hold td { padding:.22rem .15rem; vertical-align:top; }
+  table.hold input, table.hold select {
+    width:100%; min-width:0; font:inherit; font-size:.84rem; padding:.42rem .4rem;
+    border:1px solid var(--line); border-radius:.5rem; background:var(--ground); color:var(--ink);
+  }
+  button.ghost { font:inherit; font-size:.85rem; margin-top:.6rem; padding:.45rem .9rem; border-radius:999px;
+                 border:1px dashed var(--accent); background:transparent; color:var(--accent); cursor:pointer; }
+  .bar { height:.6rem; border-radius:99px; background:var(--chip); overflow:hidden; margin:.25rem 0 .55rem; }
+  .bar i { display:block; height:100%; background:var(--accent); }
+  .row2 { display:flex; justify-content:space-between; font-size:.9rem; }
+  .row2 b { font-variant-numeric:tabular-nums; }
+  .neg { color:var(--warn) !important; }
+  .pos { color:var(--good) !important; }
+  .where { font-size:.82rem; color:var(--ink-soft); }
+  .five { display:grid; gap:.6rem; }
+  .five div { background:var(--chip); border-radius:.8rem; padding:.75rem .9rem; }
+  .five .f { font-size:.78rem; color:var(--accent); font-weight:700; letter-spacing:.04em; }
+  .five .v { font-family:var(--font-serif); font-weight:900; font-size:1.55rem; color:var(--key); font-variant-numeric:tabular-nums; }
+  .five .d { font-size:.86rem; }
+  .five .gap { font-size:.82rem; margin-top:.2rem; }
+</style>
+<div class="watermark" aria-hidden="true"></div>
+<div class="wrap">
+
+  <a class="back" href="../">← 所有懶人包</a>
+  <header>
+    <h1>儲蓄險領回來要不要繳稅<span>看的是最後誰領</span></h1>
+  </header>
+  <p class="lede">同一張儲蓄險，<b>自己領</b>跟<b>小孩領</b>，走的是兩套不同的稅。選一下你的情況：</p>
+
+  <div class="card">
+    <h2>① 你的保單是哪一種？</h2>
+    <div class="field">
+      <label>誰付保費（要保人）、誰領錢（受益人）？</label>
+      <div class="chips">
+        <label><input type="radio" name="who" value="same" checked><span>同一個人（自己買自己領）</span></label>
+        <label><input type="radio" name="who" value="diff"><span>不同人（例如你買、小孩領）</span></label>
+      </div>
+    </div>
+    <div class="field" id="kindF">
+      <label>領的是哪一種錢？</label>
+      <div class="chips">
+        <label><input type="radio" name="kind" value="live" checked><span>生存給付（滿期金、年金）</span></label>
+        <label><input type="radio" name="kind" value="death"><span>死亡給付（身故保險金）</span></label>
+      </div>
+    </div>
+    <div class="field" id="whenF">
+      <label>什麼時候投保的？</label>
+      <div class="chips">
+        <label><input type="radio" name="when" value="after" checked><span>民國 95 年以後</span></label>
+        <label><input type="radio" name="when" value="before"><span>民國 95 年以前</span></label>
+      </div>
+    </div>
+    <div class="result" id="ans"></div>
+  </div>
+
+  <div class="card">
+    <h2>② 對照表</h2>
+    <table class="bd">
+      <thead><tr><th>情況</th><th>怎麼算</th></tr></thead>
+      <tbody>
+        <tr><td>自己買、自己領</td><td>免納所得稅<br>不計入最低稅負</td></tr>
+        <tr><td>你買、別人領｜生存給付</td><td>全數計入受益人<br>基本所得額</td></tr>
+        <tr><td>你買、別人領｜死亡給付</td><td>每戶全年 3,740 萬<br>以下免計入</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><b>影片裡的例子</b>：放 500 萬、10 年後領回 800 萬——
+    自己領，這 300 萬原則上不用併入所得稅；你買、小孩領，是<b>整筆 800 萬</b>計入小孩的基本所得額。</div>
+    <div class="note"><b>計入，不代表一定要繳。</b>基本所得額先扣 750 萬，超過的部分才按 20% 算，
+    再跟一般所得稅比較，繳比較高的那一個。</div>
+  </div>
+
+  <div class="card">
+    <h2>③ 這張表回答不了的</h2>
+    <ol class="qs">
+      <li>受益人那一年，加上其他所得、海外所得，<b>會不會超過 750 萬</b>？</li>
+      <li>你家裡不只一張保單時，<b>每一張</b>是誰買、誰領？</li>
+    </ol>
+    <div class="note">提早解約怎麼算：法條沒有明文，實務認定可能不同，<b>本表不列</b>。</div>
+  </div>
+
+  <div class="card">
+    <h2>這份懶人包</h2>
+    <div class="twobox">
+      <div><b>解決什麼</b>看懂你的保單領回來，走的是哪一套稅</div>
+      <div><b>不解決什麼</b>不幫你算稅額、不建議要保人或受益人怎麼改</div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <p class="big">你已經知道自己是哪一種了。</p>
+    <p class="sub">你家每一張保單是誰買、誰領，<br>合起來會不會超過門檻，要一張一張看。<br>我開放 30 分鐘免費諮詢，帶你看懂你家的保單。</p>
+  </div>
+
+  <aside class="line-cta" aria-label="官方 LINE 諮詢">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#06C755"/><path fill="#fff" d="M12 5.4c-4.5 0-8.1 2.9-8.1 6.4 0 3.2 2.9 5.8 6.7 6.3.3.1.6.2.7.4.1.2.1.5 0 .8l-.1.7c0 .2-.2.8.7.4.9-.4 4.9-2.9 6.6-4.9 1.2-1.3 1.6-2.6 1.6-3.7 0-3.5-3.6-6.4-8.1-6.4z"/></svg>
+    <div class="txt">
+      <b>30 分鐘免費諮詢</b>
+      <p>加入官方 LINE，輸入「諮詢」，我會先問你幾個小問題，再跟你約時間。</p>
+    </div>
+    <a class="btn" href="https://line.me/R/ti/p/@062buxpy" target="_blank" rel="noopener">加入官方 LINE →</a>
+  </aside>
+
+  <footer>
+    <p class="disclaim">依據｜所得稅法第 4 條第 1 項第 7 款、所得基本稅額條例第 12 條第 1 項第 2 款、財政部稅務入口網節稅手冊（最低稅負制段 115/04/15 更新；金額依物價指數調整，以財政部最新公告為準）。實際課稅以國稅局認定為準，<b>不構成稅務意見</b>，個案請洽會計師或所轄國稅局。</p>
+    <p>本頁所有計算都在你的裝置上完成，<b>不會上傳、不會儲存任何資料</b>。</p>
+    <p><a class="handle ig" href="https://www.instagram.com/ivy_073/" target="_blank" rel="noopener" aria-label="Instagram @ivy_073"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@ivy_073</a>　<a class="handle line" href="https://line.me/R/ti/p/@062buxpy" target="_blank" rel="noopener" aria-label="官方 LINE"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#06C755"/><path fill="#fff" d="M12 5.4c-4.5 0-8.1 2.9-8.1 6.4 0 3.2 2.9 5.8 6.7 6.3.3.1.6.2.7.4.1.2.1.5 0 .8l-.1.7c0 .2-.2.8.7.4.9-.4 4.9-2.9 6.6-4.9 1.2-1.3 1.6-2.6 1.6-3.7 0-3.5-3.6-6.4-8.1-6.4z"/></svg>官方 LINE</a>　2026／10</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var wm = document.querySelector('.watermark');
+  function fillWM() {
+    if (!wm) return;
+    var n = Math.ceil((window.innerWidth * window.innerHeight) / 14000) + 12;
+    n = Math.min(Math.max(n, 24), 160);
+    if (wm.childElementCount === n) return;
+    wm.textContent = '';
+    for (var i = 0; i < n; i++) { var s = document.createElement('span'); s.textContent = '@ivy_073'; wm.appendChild(s); }
+  }
+  fillWM(); window.addEventListener('resize', fillWM);
+  var $ = function (id) { return document.getElementById(id); };
+  var num = function (id) { var v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+  function money(v) { return Math.round(v).toLocaleString('zh-TW') + ' 元'; }
+  function pct(v) { return (Math.round(v * 10) / 10).toFixed(1) + '%'; }
+  function yrsTxt(m) {
+    if (m === Infinity) return '超過 60 年';
+    if (m === 0) return '已經達成';
+    var y = Math.floor(m / 12), r = m % 12;
+    return (y > 0 ? y + ' 年' : '') + (r > 0 ? (y > 0 ? ' ' : '') + r + ' 個月' : '');
+  }
+
+  function v(n) { var c = document.querySelector('input[name=' + n + ']:checked'); return c ? c.value : ''; }
+  var T = {
+    same: '<b class="tag">自己買、自己領</b><br>人身保險給付依所得稅法第 4 條第 1 項第 7 款，<b>免納所得稅</b>；也<b>不計入</b>最低稅負的基本所得額。',
+    before: '<b class="tag">95 年以前投保</b><br>最低稅負制只管「95 年施行以後訂立」的契約，這一款<b>不適用</b>。',
+    live: '<b class="tag">你買、別人領｜生存給付</b><br>受益人領到的錢<b>全數計入受益人的基本所得額</b>，不能扣 3,740 萬。<br>計入不代表一定要繳——先扣 750 萬，超過的部分才按 20% 算。',
+    death: '<b class="tag">你買、別人領｜死亡給付</b><br>每一申報戶全年合計 <b>3,740 萬以下免計入</b>；超過的部分全數計入受益人的基本所得額。'
+  };
+  function show() {
+    var w = v('who'), k = v('kind'), t = v('when');
+    $('kindF').style.display = w === 'same' ? 'none' : '';
+    $('whenF').style.display = w === 'same' ? 'none' : '';
+    $('ans').innerHTML = w === 'same' ? T.same : (t === 'before' ? T.before : T[k]);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('input[type=radio]'), function (el) { el.addEventListener('change', show); });
+  show();
+
+})();
+</script>
